@@ -23,7 +23,7 @@ describe('static Cloudflare Worker deployment', () => {
     );
 
     expect(workerConfiguration).toMatchObject({
-      name: 'blog',
+      name: 'paoloscrive',
       assets: {
         directory: './dist',
         not_found_handling: '404-page',
@@ -32,11 +32,11 @@ describe('static Cloudflare Worker deployment', () => {
     expect(pkg.devDependencies.wrangler).toBeDefined();
     expect(pkg.scripts.build).toBe('astro build --force');
     expect(pkg.scripts.deploy).toBe('pnpm build && wrangler deploy');
-    expect(astroConfiguration).toContain("'https://pctb.it'");
+    expect(astroConfiguration).toContain("'https://paoloscrive.example'");
     expect(workflow).toContain('name: Quality');
     expect(workflow).toContain('pnpm quality');
     expect(deploymentGuide).toContain('pnpm exec wrangler rollback');
     expect(deploymentGuide).toContain('Workers Builds');
-    expect(deploymentGuide).toContain('PUBLIC_SITE_URL=https://pctb.it');
+    expect(deploymentGuide).toContain('PUBLIC_SITE_URL=');
   });
 });

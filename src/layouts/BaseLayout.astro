@@ -1,15 +1,14 @@
 ---
-import '@fontsource-variable/jetbrains-mono';
+import '@fontsource-variable/bodoni-moda/standard.css';
+import '@fontsource-variable/bodoni-moda/standard-italic.css';
+import '@fontsource-variable/literata/standard.css';
+import '@fontsource-variable/literata/standard-italic.css';
 
-interface Alternate {
-  hreflang: string;
-  href: string;
-}
+import { siteName } from '../lib/site';
 
 interface Props {
-  alternates?: Alternate[];
   description?: string;
-  lang?: 'en' | 'it';
+  lang?: string;
   pageType?: 'article' | 'website';
   publishedAt?: Date;
   title: string;
@@ -17,20 +16,16 @@ interface Props {
 }
 
 const {
-  alternates = [],
   description,
-  lang = 'en',
+  lang = 'it',
   pageType = 'website',
   publishedAt,
   title,
   updatedAt,
 } = Astro.props;
-const siteName = 'PC - the blog';
+const site = Astro.site!;
 const documentTitle = title === siteName ? siteName : `${title} · ${siteName}`;
-const canonicalUrl = new URL(
-  Astro.url.pathname,
-  Astro.site ?? 'https://pctb.it',
-).href;
+const canonicalUrl = new URL(Astro.url.pathname, site).href;
 const configuredAnalyticsToken = import.meta.env.PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN?.trim();
 const analyticsToken = import.meta.env.PROD && configuredAnalyticsToken
   ? configuredAnalyticsToken
@@ -56,13 +51,11 @@ const structuredData =
         '@context': 'https://schema.org',
         '@type': 'WebPage',
         description,
+        inLanguage: 'it',
         isPartOf: {
           '@type': 'WebSite',
           name: siteName,
-          url: new URL(
-            '/',
-            Astro.site ?? 'https://pctb.it',
-          ).href,
+          url: new URL('/', site).href,
         },
         name: documentTitle,
         url: canonicalUrl,
@@ -70,26 +63,19 @@ const structuredData =
 ---
 
 <!doctype html>
-<html lang={lang}>
+<html lang="it">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="color-scheme" content="light dark" />
     {description && <meta name="description" content={description} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonicalUrl} />
-    {
-      alternates.map((alternate) => (
-        <link
-          rel="alternate"
-          hreflang={alternate.hreflang}
-          href={new URL(alternate.href, Astro.site ?? 'https://pctb.it').href}
-        />
-      ))
-    }
-    <link rel="alternate" type="application/rss+xml" title={`${siteName} RSS feed`} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${siteName}: feed RSS`} href="/rss.xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta property="og:site_name" content={siteName} />
+    <meta property="og:locale" content="it_IT" />
     <meta property="og:type" content={pageType === 'article' ? 'article' : 'website'} />
     <meta property="og:title" content={documentTitle} />
     {description && <meta property="og:description" content={description} />}
@@ -113,7 +99,7 @@ const structuredData =
     <title>{documentTitle}</title>
   </head>
   <body>
-    <a class="skip-link" href="#main-content">Skip to content</a>
+    <a class="skip-link" href="#main-content">Vai al contenuto</a>
     <slot name="header" />
     <main id="main-content"><slot /></main>
     <slot name="footer" />
@@ -121,19 +107,42 @@ const structuredData =
 </html>
 
 <style is:global>
+  /*
+   * Direction A, "Taccuino" (docs/design/proposte.html): black ink on paper
+   * and hatching, as in the notebook's own style guide. The only hue, a
+   * ballpoint blue, is reserved for a story told inside a story.
+   */
   :root {
-    color-scheme: dark;
-    --ground: #121416;
-    --panel: #1b1e21;
-    --ink: #f2f3ec;
-    --muted: #b7bcb4;
-    --line: #4e5350;
-    --signal: #d8ff68;
-    --measure: 75ch;
-    background: var(--ground);
+    color-scheme: light;
+    --paper: #f0ebdd;
+    --paper-deep: #e6dfcb;
+    --ink: #1c1b18;
+    --faded: #5f5a4e;
+    --rule: #cdc4ae;
+    --blue: #2341a6;
+    --display: 'Bodoni Moda Variable', 'Bodoni 72', Didot, 'Times New Roman', serif;
+    --text: 'Literata Variable', Georgia, 'Times New Roman', serif;
+    --measure: 36rem;
+    --gutter: max(1rem, env(safe-area-inset-left, 0px));
+    --hatch: repeating-linear-gradient(-45deg, var(--ink) 0 1px, transparent 1px 5px);
+    --hatch-soft: repeating-linear-gradient(-45deg, var(--rule) 0 1px, transparent 1px 4px);
+    background: var(--paper);
     color: var(--ink);
-    font-family: 'JetBrains Mono Variable', monospace;
+    font-family: var(--text);
+    font-optical-sizing: auto;
     font-synthesis: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --paper: #1a1814;
+      --paper-deep: #24211b;
+      --ink: #ece5d3;
+      --faded: #aaa28f;
+      --rule: #4a4538;
+      --blue: #93a8ff;
+    }
   }
 
   *,
@@ -144,25 +153,38 @@ const structuredData =
 
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
-    background: var(--ground);
+    background: var(--paper);
     color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.6;
     overflow-wrap: anywhere;
+  }
+
+  ::selection {
+    background: var(--ink);
+    color: var(--paper);
   }
 
   a {
     color: inherit;
-    text-decoration-color: var(--signal);
+    text-decoration-color: var(--faded);
+    text-decoration-thickness: 1px;
     text-underline-offset: 0.2em;
+  }
+
+  a:hover {
+    text-decoration-color: var(--ink);
   }
 
   a:focus-visible,
   button:focus-visible,
   [tabindex]:focus-visible {
-    outline: 0.2rem solid var(--signal);
+    outline: 2px solid var(--blue);
     outline-offset: 0.25rem;
   }
 
@@ -172,14 +194,28 @@ const structuredData =
     max-width: 100%;
   }
 
+  .label {
+    margin: 0;
+    color: var(--faded);
+    font-size: 0.78rem;
+    font-variant-caps: all-small-caps;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+  }
+
+  .hatch-rule {
+    height: 9px;
+    background: var(--hatch);
+  }
+
   .skip-link {
     position: fixed;
     z-index: 10;
     inset-block-start: 0.75rem;
     inset-inline-start: 0.75rem;
     padding: 0.75rem 1rem;
-    background: var(--signal);
-    color: var(--ground);
+    background: var(--ink);
+    color: var(--paper);
     font-weight: 700;
     transform: translateY(calc(-100% - 1rem));
   }

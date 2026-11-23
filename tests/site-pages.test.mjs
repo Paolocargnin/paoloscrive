@@ -4,12 +4,14 @@ import { describe, expect, it } from 'vitest';
 const read = (path) => readFile(path, 'utf8');
 
 describe('reading surfaces', () => {
-  it('keeps global navigation, a skip link, and reduced-motion support in the layout', async () => {
+  it('keeps a skip link, reduced motion and the Taccuino typefaces in the layout', async () => {
     const layout = await read('src/layouts/BaseLayout.astro');
 
-    expect(layout).toContain('Skip to content');
+    expect(layout).toContain('Vai al contenuto');
     expect(layout).toContain('prefers-reduced-motion: reduce');
-    expect(layout).toContain("'JetBrains Mono Variable'");
+    expect(layout).toContain("'Bodoni Moda Variable'");
+    expect(layout).toContain("'Literata Variable'");
+    expect(layout).toContain('prefers-color-scheme: dark');
   });
 
   it('keeps the page shell free of a minimum width so enlarged text can reflow', async () => {
@@ -21,7 +23,7 @@ describe('reading surfaces', () => {
     expect(bodyRule).toContain('overflow-wrap: anywhere;');
   });
 
-  it('keeps canonical, social, structured, and production-only analytics metadata in the layout', async () => {
+  it('keeps canonical, social, structured and production-only analytics metadata', async () => {
     const layout = await read('src/layouts/BaseLayout.astro');
 
     expect(layout).toContain('rel="canonical"');
@@ -32,60 +34,45 @@ describe('reading surfaces', () => {
     expect(layout).toContain('PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN');
   });
 
-  it('declares a public favicon so browsers do not request a missing default icon', async () => {
-    const [layout, favicon] = await Promise.all([
-      read('src/layouts/BaseLayout.astro'),
-      read('public/favicon.svg'),
-    ]);
-
-    expect(layout).toContain('rel="icon"');
-    expect(layout).toContain('href="/favicon.svg"');
-    expect(favicon).toContain('<svg');
-  });
-
-  it('provides the promised homepage, archive, controlled tags, Post, and 404 routes', async () => {
-    const pages = await Promise.all([
-      read('src/pages/index.astro'),
-      read('src/pages/posts/index.astro'),
-      read('src/pages/posts/[...slug].astro'),
-      read('src/pages/tags/index.astro'),
-      read('src/pages/tags/[tag].astro'),
-      read('src/pages/404.astro'),
-      read('src/pages/editorial/index.astro'),
-      read('src/pages/rss.xml.js'),
-      read('src/pages/robots.txt.ts'),
-    ]);
-
-    expect(pages[0]).toContain('RECENT POSTS');
-    expect(pages[1]).toContain('ALL POSTS');
-    expect(pages[2]).toContain('<PostArticle');
-    const article = await read('src/components/PostArticle.astro');
-    expect(article).toContain('<Corrections');
-    expect(article).toContain('<Sources');
-    expect(pages[3]).toContain('controlledTagIds');
-    expect(pages[4]).toContain('getStaticPaths');
-    expect(pages[5]).toContain('404 / MISSING FROM THE INDEX');
-    expect(pages[6]).toContain('Editorial process');
-    expect(pages[7]).toContain('@astrojs/rss');
-    expect(pages[8]).toContain('Sitemap:');
-  });
-
-  it('keeps long prose and code responsive in the Post route', async () => {
-    const page = await read('src/components/PostArticle.astro');
-
-    expect(page).toContain('max-width: var(--measure)');
-    expect(page).toContain('width: min(80rem, calc(100vw - 2rem))');
-    expect(page).toContain('codeBlock.tabIndex = 0');
-    expect(page).toContain('mix-blend-mode: exclusion');
-  });
-
-  it('renders structured public Sources with the same semantic region as Corrections', async () => {
-    const sources = await read('src/components/Sources.astro');
-
-    expect(sources).toContain('aria-labelledby="sources-title"');
-    expect(sources).toContain(
-      "EVIDENCE / {String(sources.length).padStart(2, '0')}",
+  it('provides the home, archive, Racconto, Translation, Temi, about, process and 404 routes', async () => {
+    const pages = await Promise.all(
+      [
+        'src/pages/index.astro',
+        'src/pages/racconti/index.astro',
+        'src/pages/racconti/[slug]/index.astro',
+        'src/pages/racconti/[slug]/[lang].astro',
+        'src/pages/temi/index.astro',
+        'src/pages/temi/[tag].astro',
+        'src/pages/chi-sono.astro',
+        'src/pages/come-scrivo.astro',
+        'src/pages/404.astro',
+        'src/pages/rss.xml.js',
+        'src/pages/robots.txt.ts',
+      ].map(read),
     );
-    expect(sources).toContain('grid-template-columns: 40% auto');
+
+    expect(pages[0]).toContain('Indice dei racconti');
+    expect(pages[2]).toContain('<PostArticle');
+    expect(pages[3]).toContain('translation={translation}');
+    expect(pages[4]).toContain('controlledTagIds');
+    expect(pages[7]).toContain('Le traduzioni');
+    expect(pages[9]).toContain('@astrojs/rss');
+    expect(pages[10]).toContain('Sitemap:');
+  });
+
+  it('shows the AI notice on a Translation until it is signed', async () => {
+    const article = await read('src/components/PostArticle.astro');
+
+    expect(article).toContain(
+      'const unsigned = translation && !isSigned(translation);',
+    );
+    expect(article).toContain('{unsigned && <p class="notice" role="note">');
+    expect(article).toContain('Rivisto il');
+  });
+
+  it('reserves the only colour for a story told inside the story', async () => {
+    const article = await read('src/components/PostArticle.astro');
+
+    expect(article).toMatch(/blockquote\) \{[\s\S]*?color: var\(--blue\);/);
   });
 });

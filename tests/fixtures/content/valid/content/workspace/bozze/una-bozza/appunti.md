@@ -1,0 +1,1 @@
+La Nota di partenza.

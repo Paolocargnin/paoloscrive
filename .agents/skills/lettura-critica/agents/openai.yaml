@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lettura critica"
+  short_description: "Cosa non funziona in una Bozza, senza riscriverla"
+  default_prompt: "Use $lettura-critica to read a Bozza of Paolo scrive critically."
+policy:
+  allow_implicit_invocation: false

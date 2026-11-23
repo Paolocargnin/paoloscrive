@@ -1,0 +1,25 @@
+---
+import { getCollection, render } from 'astro:content';
+
+import PostArticle from '../../../components/PostArticle.astro';
+import { translationLanguage, translationsBySlug } from '../../../lib/posts';
+
+// ADR 0022: a Translation is served at /racconti/<slug>/<lang>/.
+export async function getStaticPaths() {
+  const allPosts = await getCollection('posts');
+  const bySlug = translationsBySlug(await getCollection('translations'));
+  return allPosts.flatMap((post) =>
+    (bySlug.get(post.id) ?? []).map((translation) => ({
+      params: { slug: post.id, lang: translationLanguage(translation) },
+      props: { post, allPosts, translations: bySlug.get(post.id) ?? [], translation },
+    })),
+  );
+}
+
+const { post, allPosts, translations, translation } = Astro.props;
+const { Content } = await render(translation);
+---
+
+<PostArticle post={post} allPosts={allPosts} translations={translations} translation={translation}>
+  <Content />
+</PostArticle>

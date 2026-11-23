@@ -1,22 +1,24 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 
-import { sortPostsNewestFirst } from '../lib/posts';
+import { postUrl, sortPostsNewestFirst } from '../lib/posts';
+import { siteDescription, siteName } from '../lib/site';
 
 export async function GET(context) {
   const posts = sortPostsNewestFirst(await getCollection('posts'));
 
   return rss({
-    title: 'PC - the blog',
-    description: "Paolo Cargnin's published writing.",
+    title: siteName,
+    description: siteDescription,
     site: context.site,
+    customData: '<language>it</language>',
+    xmlns: { dc: 'http://purl.org/dc/elements/1.1/' },
     items: posts.map((post) => ({
       title: post.data.title,
-      description: post.data.aiGenerated
-        ? `[AI-generated, not yet reviewed] ${post.data.description}`
-        : post.data.description,
-      link: `/posts/${post.id}/`,
+      description: post.data.description,
+      link: postUrl(post),
       pubDate: post.data.publishedAt,
+      customData: `<dc:language>${post.data.lang}</dc:language>`,
     })),
   });
 }

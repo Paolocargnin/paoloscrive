@@ -52,7 +52,7 @@ if (addRemote.status !== 0) {
 }
 
 await scaffoldWorkspace(workspace);
-console.log(`Initialized private Workspace at ${workspace}.`);
+console.log(`Workspace privato creato in ${workspace}.`);
 console.log(
-  'Commit and push its contract file from that private repository before using it on another device.',
+  'Fai commit e push di content-contract.json dal repository privato prima di usarlo su un altro dispositivo.',
 );

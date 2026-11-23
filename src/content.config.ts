@@ -5,27 +5,14 @@ import { z } from 'astro/zod';
 import {
   contentContract,
   controlledTagIds,
+  languageCodes,
   stableIdPattern,
 } from './content/contract.mjs';
 
-const correction = z
-  .object({
-    date: z.coerce.date(),
-    summary: z.string().trim().min(1),
-    kind: z.enum(['correction', 'revision']),
-  })
-  .strict();
+const language = z.enum(languageCodes as unknown as [string, ...string[]]);
 
-const source = z
-  .object({
-    title: z.string().trim().min(1),
-    url: z.url().refine((value) => /^https?:\/\//.test(value), {
-      message: 'Source URLs must use HTTP(S).',
-    }),
-    description: z.string().trim().min(1),
-  })
-  .strict();
-
+// Every Post is a Racconto (ADR 0021). Validation rules beyond the shape live
+// in scripts/content-contract.mjs and run before every build.
 const posts = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/posts' }),
   schema: z
@@ -34,45 +21,27 @@ const posts = defineCollection({
       title: z.string().trim().min(1),
       description: z.string().trim().min(1),
       publishedAt: z.coerce.date(),
-      updatedAt: z.coerce.date().optional(),
+      revisedAt: z.coerce.date().optional(),
+      lang: language.default(contentContract.defaultLanguage),
       tags: z
         .array(z.enum(controlledTagIds as unknown as [string, ...string[]]))
-        .min(1)
-        .max(4)
-        .refine((tags) => new Set(tags).size === tags.length, {
-          message: 'Post tags must not repeat a controlled tag ID.',
-        }),
-      corrections: z.array(correction).min(1).optional(),
-      sources: z.array(source).min(1).optional(),
-      aiGenerated: z.literal(true).optional(),
+        .max(contentContract.racconto.maxTags)
+        .default([]),
     })
-    .strict()
-    .superRefine((post, context) => {
-      if ((post.updatedAt === undefined) !== (post.corrections === undefined)) {
-        context.addIssue({
-          code: 'custom',
-          message: 'updatedAt and dated corrections must appear together.',
-        });
-      }
-      if (post.updatedAt && post.updatedAt < post.publishedAt) {
-        context.addIssue({
-          code: 'custom',
-          message: 'updatedAt cannot precede publishedAt.',
-        });
-      }
-    }),
+    .strict(),
 });
 
-// ADR 0020: Italian translations of public Posts, at
-// src/content/translations/it/<post-slug>.md. Everything not listed here
-// (id, dates, tags, sources, AI notice) comes from the Post itself.
+// ADR 0022: translations/<lang>/<slug>.md. Everything not listed here comes
+// from the Racconto; the Firma belongs to the Translation.
 const translations = defineCollection({
   loader: glob({ pattern: '*/*.md', base: './src/content/translations' }),
   schema: z
     .object({
       title: z.string().trim().min(1),
       description: z.string().trim().min(1),
-      corrections: z.array(correction).min(1).optional(),
+      basedOn: z.coerce.date(),
+      signedBy: z.string().trim().min(1).optional(),
+      signedAt: z.coerce.date().optional(),
     })
     .strict(),
 });

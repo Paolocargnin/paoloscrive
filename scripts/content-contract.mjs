@@ -5,11 +5,12 @@ import { fileURLToPath } from 'node:url';
 import {
   contentContract,
   controlledTagIds,
+  languageCodes,
   slugPattern,
   stableIdPattern,
 } from '../src/content/contract.mjs';
 import {
-  isIsoDate as isDate,
+  isIsoDate,
   isPlainObject,
   parseMarkdownDocument,
 } from './markdown-lib.mjs';
@@ -23,28 +24,20 @@ const markdownExtension = '.md';
 export class ContentContractError extends Error {
   constructor(errors) {
     super(
-      `Content contract validation failed:\n${errors.map((error) => `- ${error}`).join('\n')}`,
+      `Il contratto dei contenuti non è rispettato:\n${errors.map((error) => `- ${error}`).join('\n')}`,
     );
     this.name = 'ContentContractError';
     this.errors = errors;
   }
 }
 
-function asPath(value) {
-  return path.resolve(value);
-}
-
 async function exists(target) {
   try {
-    await accessPath(target);
+    await stat(target);
     return true;
   } catch {
     return false;
   }
-}
-
-async function accessPath(target) {
-  await stat(target);
 }
 
 async function readMarkdown(filePath, errors) {
@@ -59,219 +52,118 @@ async function readMarkdown(filePath, errors) {
 
 function requireString(data, field, filePath, errors) {
   if (typeof data[field] !== 'string' || data[field].trim() === '') {
-    errors.push(`${filePath}: ${field} must be a non-empty string.`);
-    return false;
-  }
-  return true;
-}
-
-function validateStableId(value, description, errors) {
-  if (typeof value !== 'string' || !stableIdPattern.test(value)) {
-    errors.push(
-      `${description}: id must be a UUID so it remains stable across lifecycle stages.`,
-    );
+    errors.push(`${filePath}: ${field} deve essere un testo non vuoto.`);
   }
 }
 
-function isPublicUrl(value) {
-  if (typeof value !== 'string') {
-    return false;
-  }
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-function validateSources(sources, filePath, errors) {
-  if (!Array.isArray(sources) || sources.length === 0) {
-    errors.push(
-      `${filePath}: sources must contain at least one public source.`,
-    );
-    return;
-  }
-
-  sources.forEach((source, index) => {
-    const description = `${filePath}: sources[${index}]`;
-    if (!isPlainObject(source)) {
-      errors.push(`${description} must be a mapping.`);
-      return;
-    }
-    const fields = Object.keys(source);
-    if (
-      fields.some((field) => !['title', 'url', 'description'].includes(field))
-    ) {
-      errors.push(`${description} has an unsupported field.`);
-    }
-    requireString(source, 'title', description, errors);
-    if (!isPublicUrl(source.url)) {
-      errors.push(`${description}.url must be an absolute HTTP(S) URL.`);
-    }
-    requireString(source, 'description', description, errors);
-  });
-}
-
-function validatePostMetadata(data, filePath, errors) {
-  const allowedFields = new Set([
-    ...contentContract.post.requiredMetadata,
-    ...contentContract.post.optionalMetadata,
-  ]);
+function rejectUnknownFields(data, allowed, filePath, what, errors) {
   for (const field of Object.keys(data)) {
-    if (!allowedFields.has(field)) {
-      errors.push(
-        `${filePath}: ${field} is not Post metadata. The public slug comes from the filename.`,
-      );
+    if (!allowed.has(field)) {
+      errors.push(`${filePath}: ${field} non è un metadato di ${what}.`);
     }
   }
+}
 
-  for (const field of contentContract.post.requiredMetadata) {
+/** The date of the version a reader sees: the last Revisione, or publication. */
+export function latestVersionDate(data) {
+  return isIsoDate(data.revisedAt) ? data.revisedAt : data.publishedAt;
+}
+
+export function raccontoLanguage(data) {
+  return data.lang ?? contentContract.defaultLanguage;
+}
+
+function validateRaccontoMetadata(data, filePath, errors) {
+  const { requiredMetadata, optionalMetadata, maxTags } =
+    contentContract.racconto;
+  rejectUnknownFields(
+    data,
+    new Set([...requiredMetadata, ...optionalMetadata]),
+    filePath,
+    'un Racconto (lo slug pubblico viene dal nome del file)',
+    errors,
+  );
+  for (const field of requiredMetadata) {
     if (!(field in data)) {
-      errors.push(`${filePath}: missing required Post metadata: ${field}.`);
+      errors.push(`${filePath}: manca il metadato obbligatorio ${field}.`);
     }
   }
 
-  validateStableId(data.id, filePath, errors);
+  if (typeof data.id !== 'string' || !stableIdPattern.test(data.id)) {
+    errors.push(
+      `${filePath}: id deve essere un UUID, così resta stabile dalla Bozza al Racconto.`,
+    );
+  }
   requireString(data, 'title', filePath, errors);
   requireString(data, 'description', filePath, errors);
 
-  if (!isDate(data.publishedAt)) {
-    errors.push(`${filePath}: publishedAt must be an ISO date (YYYY-MM-DD).`);
+  if (!isIsoDate(data.publishedAt)) {
+    errors.push(`${filePath}: publishedAt deve essere una data AAAA-MM-GG.`);
   }
-
-  if (
-    !Array.isArray(data.tags) ||
-    data.tags.length < 1 ||
-    data.tags.length > 4
-  ) {
-    errors.push(
-      `${filePath}: tags must contain one to four controlled tag IDs.`,
-    );
-  } else {
-    const invalidTags = data.tags.filter(
-      (tag) => !controlledTagIds.includes(tag),
-    );
-    if (invalidTags.length > 0) {
+  if ('revisedAt' in data) {
+    if (!isIsoDate(data.revisedAt)) {
+      errors.push(`${filePath}: revisedAt deve essere una data AAAA-MM-GG.`);
+    } else if (
+      isIsoDate(data.publishedAt) &&
+      data.revisedAt < data.publishedAt
+    ) {
       errors.push(
-        `${filePath}: unknown tag IDs: ${invalidTags.join(', ')}. Use the controlled vocabulary.`,
+        `${filePath}: revisedAt non può precedere la data di pubblicazione.`,
       );
     }
-    if (new Set(data.tags).size !== data.tags.length) {
-      errors.push(`${filePath}: tags must not repeat a tag ID.`);
-    }
   }
 
-  const hasCorrections = 'corrections' in data;
-  const hasUpdatedAt = 'updatedAt' in data;
-  if (hasCorrections !== hasUpdatedAt) {
+  if ('lang' in data && !languageCodes.includes(data.lang)) {
     errors.push(
-      `${filePath}: updatedAt and dated corrections must appear together.`,
+      `${filePath}: lang deve essere una di ${languageCodes.join(', ')}.`,
     );
   }
 
-  if (hasUpdatedAt && !isDate(data.updatedAt)) {
-    errors.push(`${filePath}: updatedAt must be an ISO date (YYYY-MM-DD).`);
-  }
-  if (
-    isDate(data.publishedAt) &&
-    isDate(data.updatedAt) &&
-    data.updatedAt < data.publishedAt
-  ) {
-    errors.push(`${filePath}: updatedAt cannot precede publishedAt.`);
-  }
-
-  if (hasCorrections) {
-    if (!Array.isArray(data.corrections) || data.corrections.length === 0) {
+  if ('tags' in data) {
+    if (!Array.isArray(data.tags) || data.tags.length > maxTags) {
       errors.push(
-        `${filePath}: corrections must contain at least one visible dated correction.`,
+        `${filePath}: tags deve essere una lista di al massimo ${maxTags} temi.`,
       );
-      return;
-    }
-
-    data.corrections.forEach((correction, index) => {
-      const description = `${filePath}: corrections[${index}]`;
-      if (!isPlainObject(correction)) {
-        errors.push(`${description} must be a mapping.`);
-        return;
-      }
-      const fields = Object.keys(correction);
-      if (
-        fields.some((field) => !['date', 'summary', 'kind'].includes(field))
-      ) {
-        errors.push(`${description} has an unsupported field.`);
-      }
-      if (!isDate(correction.date)) {
-        errors.push(`${description}.date must be an ISO date (YYYY-MM-DD).`);
-      }
-      if (
-        typeof correction.summary !== 'string' ||
-        correction.summary.trim() === ''
-      ) {
+    } else {
+      const unknown = data.tags.filter(
+        (tag) => !controlledTagIds.includes(tag),
+      );
+      if (unknown.length > 0) {
         errors.push(
-          `${description}.summary must explain the visible correction.`,
+          `${filePath}: temi sconosciuti: ${unknown.join(', ')}. Usa il vocabolario controllato.`,
         );
       }
-      if (!['correction', 'revision'].includes(correction.kind)) {
-        errors.push(`${description}.kind must be correction or revision.`);
+      if (new Set(data.tags).size !== data.tags.length) {
+        errors.push(`${filePath}: un tema compare due volte.`);
       }
-    });
-  }
-
-  if ('sources' in data) {
-    validateSources(data.sources, filePath, errors);
-  }
-
-  // ADR 0019: an AI-generated Post carries `aiGenerated: true` until Paolo
-  // reviews it; review removes the field instead of setting it to false.
-  if ('aiGenerated' in data && data.aiGenerated !== true) {
-    errors.push(
-      `${filePath}: aiGenerated must be true; remove the field once the Post has been reviewed.`,
-    );
-  }
-}
-
-function validatePostBody(body, filePath, errors) {
-  const hasLegacySourcesSection = /^ {0,3}##(?!#)\s+sources\s*#*\s*$/im.test(
-    body,
-  );
-  if (hasLegacySourcesSection) {
-    errors.push(
-      `${filePath}: public Sources must use the structured frontmatter sources field, not a ## Sources section.`,
-    );
+    }
   }
 }
 
 /**
- * Validate one Markdown document before a Publication candidate is copied into
- * the public Posts collection. The candidate keeps its article.md filename in
- * the Workspace, so the intended public slug is supplied separately.
+ * Validate one Markdown document before a Bozza is published as a Racconto.
+ * The Bozza keeps its testo.md filename in the Workspace, so the intended
+ * public slug is supplied separately.
  */
-export async function validatePostFile(filePath, slug, postsDirectory) {
+export async function validateRaccontoFile(filePath, slug, postsDirectory) {
   const errors = [];
   if (!slugPattern.test(slug)) {
-    errors.push(`${slug}: filename must be a lowercase hyphenated slug.`);
+    errors.push(`${slug}: lo slug usa solo minuscole, cifre e trattini.`);
   }
-  const { data, body } = await readMarkdown(filePath, errors);
-  validatePostMetadata(data, filePath, errors);
-  validatePostBody(body, filePath, errors);
+  const { data } = await readMarkdown(filePath, errors);
+  validateRaccontoMetadata(data, filePath, errors);
 
-  if (
-    postsDirectory &&
-    typeof data.id === 'string' &&
-    stableIdPattern.test(data.id)
-  ) {
-    const entries = await readdir(postsDirectory, { withFileTypes: true });
-    for (const entry of entries) {
+  if (postsDirectory && (await exists(postsDirectory))) {
+    for (const entry of await readdir(postsDirectory, {
+      withFileTypes: true,
+    })) {
       if (!entry.isFile() || path.extname(entry.name) !== markdownExtension) {
         continue;
       }
-      const existingPost = path.join(postsDirectory, entry.name);
-      const { data: existingData } = await readMarkdown(existingPost, errors);
+      const existing = path.join(postsDirectory, entry.name);
+      const { data: existingData } = await readMarkdown(existing, errors);
       if (existingData.id === data.id) {
-        errors.push(
-          `${filePath}: id duplicates ${existingPost}; stable Post IDs must be unique.`,
-        );
+        errors.push(`${filePath}: id già usato da ${existing}.`);
       }
     }
   }
@@ -281,30 +173,24 @@ export async function validatePostFile(filePath, slug, postsDirectory) {
 }
 
 async function validatePublicDirectory(postsDirectory, errors) {
+  const racconti = new Map();
   if (!(await exists(postsDirectory))) {
-    errors.push(`${postsDirectory}: public Posts directory is required.`);
-    return;
+    errors.push(`${postsDirectory}: la cartella dei Racconti è obbligatoria.`);
+    return racconti;
   }
 
-  const postIds = new Map();
-  const entries = await readdir(postsDirectory, { withFileTypes: true });
-  for (const entry of entries) {
+  const ids = new Map();
+  for (const entry of await readdir(postsDirectory, { withFileTypes: true })) {
     const entryPath = path.join(postsDirectory, entry.name);
-    if (entry.isSymbolicLink()) {
+    if (entry.isSymbolicLink() || entry.isDirectory()) {
       errors.push(
-        `${entryPath}: symbolic links are forbidden in public Posts.`,
+        `${entryPath}: i Racconti sono file Markdown al primo livello, così l'URL viene dal nome del file.`,
       );
       continue;
     }
-    if (entry.isDirectory()) {
-      errors.push(
-        `${entryPath}: Posts must be top-level Markdown files so URLs derive from filenames.`,
-      );
-      continue;
-    }
-    if (!entry.isFile() || path.extname(entry.name) !== markdownExtension) {
+    if (path.extname(entry.name) !== markdownExtension) {
       if (entry.name !== '.gitkeep') {
-        errors.push(`${entryPath}: only Markdown Post files are allowed.`);
+        errors.push(`${entryPath}: qui sono ammessi solo file Markdown.`);
       }
       continue;
     }
@@ -312,145 +198,216 @@ async function validatePublicDirectory(postsDirectory, errors) {
     const slug = path.basename(entry.name, markdownExtension);
     if (!slugPattern.test(slug)) {
       errors.push(
-        `${entryPath}: filename must be a lowercase hyphenated slug.`,
+        `${entryPath}: il nome del file usa solo minuscole, cifre e trattini.`,
       );
     }
-    const { data, body } = await readMarkdown(entryPath, errors);
-    validatePostMetadata(data, entryPath, errors);
-    validatePostBody(body, entryPath, errors);
+    const { data } = await readMarkdown(entryPath, errors);
+    validateRaccontoMetadata(data, entryPath, errors);
     if (typeof data.id === 'string' && stableIdPattern.test(data.id)) {
-      const firstPost = postIds.get(data.id);
-      if (firstPost) {
-        errors.push(
-          `${entryPath}: id duplicates ${firstPost}; stable Post IDs must be unique.`,
-        );
+      if (ids.has(data.id)) {
+        errors.push(`${entryPath}: id già usato da ${ids.get(data.id)}.`);
       } else {
-        postIds.set(data.id, entryPath);
+        ids.set(data.id, entryPath);
+      }
+    }
+    racconti.set(slug, data);
+  }
+  return racconti;
+}
+
+export function translationsDirectoryFor(postsDirectory) {
+  return path.join(path.dirname(postsDirectory), 'translations');
+}
+
+// ADR 0022: a Translation lives at translations/<lang>/<slug>.md. It names the
+// version of the Racconto it follows (basedOn) and may carry Paolo's Firma.
+async function validateTranslationsDirectory(
+  translationsDirectory,
+  racconti,
+  errors,
+) {
+  if (!(await exists(translationsDirectory))) {
+    return;
+  }
+  const { requiredMetadata, optionalMetadata } = contentContract.translation;
+  const allowed = new Set([...requiredMetadata, ...optionalMetadata]);
+
+  for (const entry of await readdir(translationsDirectory, {
+    withFileTypes: true,
+  })) {
+    const languagePath = path.join(translationsDirectory, entry.name);
+    if (!entry.isDirectory() || !languageCodes.includes(entry.name)) {
+      if (entry.name !== '.gitkeep') {
+        errors.push(
+          `${languagePath}: le Traduzioni stanno in una cartella per lingua (${languageCodes.join(', ')}).`,
+        );
+      }
+      continue;
+    }
+    const lang = entry.name;
+    for (const file of await readdir(languagePath, { withFileTypes: true })) {
+      const filePath = path.join(languagePath, file.name);
+      if (!file.isFile() || path.extname(file.name) !== markdownExtension) {
+        errors.push(`${filePath}: qui sono ammessi solo file Markdown.`);
+        continue;
+      }
+      const slug = path.basename(file.name, markdownExtension);
+      const racconto = racconti.get(slug);
+      if (!racconto) {
+        errors.push(`${filePath}: non esiste un Racconto pubblicato ${slug}.`);
+        continue;
+      }
+      if (raccontoLanguage(racconto) === lang) {
+        errors.push(
+          `${filePath}: ${slug} è già scritto in questa lingua; la Traduzione va nell'altra.`,
+        );
+      }
+
+      const { data } = await readMarkdown(filePath, errors);
+      rejectUnknownFields(data, allowed, filePath, 'una Traduzione', errors);
+      requireString(data, 'title', filePath, errors);
+      requireString(data, 'description', filePath, errors);
+
+      const current = latestVersionDate(racconto);
+      if (!isIsoDate(data.basedOn)) {
+        errors.push(`${filePath}: basedOn deve essere una data AAAA-MM-GG.`);
+      } else if (data.basedOn !== current) {
+        errors.push(
+          `${filePath}: segue la versione del ${data.basedOn}, ma il Racconto è alla versione del ${current}. La Revisione non esce finché la Traduzione non la segue (basedOn: ${current}).`,
+        );
+      }
+
+      const hasSigner = 'signedBy' in data;
+      const hasDate = 'signedAt' in data;
+      if (hasSigner !== hasDate) {
+        errors.push(
+          `${filePath}: la Firma ha bisogno di signedBy e signedAt insieme.`,
+        );
+      }
+      if (hasSigner) {
+        requireString(data, 'signedBy', filePath, errors);
+        if (!isIsoDate(data.signedAt)) {
+          errors.push(`${filePath}: signedAt deve essere una data AAAA-MM-GG.`);
+        } else if (isIsoDate(data.basedOn) && data.signedAt < data.basedOn) {
+          errors.push(
+            `${filePath}: la Firma del ${data.signedAt} è precedente alla versione che la Traduzione segue. Se l'ha aggiornata l'IA, togli signedBy e signedAt; se l'hai riletta, firma di nuovo con pnpm firma.`,
+          );
+        }
       }
     }
   }
 }
 
-async function validateWorkspaceArticle(articlePath, lifecycle, errors) {
-  const articleName = path.basename(articlePath);
-  if (!slugPattern.test(articleName)) {
+// ADR 0021: raw material (voice memos, photos of notebook pages, scans) lives
+// beside a working text in a flat materiali/ folder. Publication copies only
+// testo.md, so material never reaches the public repository.
+async function validateMaterials(materialsPath, errors) {
+  const { materialExtensions } = contentContract.workspace;
+  for (const entry of await readdir(materialsPath, { withFileTypes: true })) {
+    const entryPath = path.join(materialsPath, entry.name);
+    if (!entry.isFile()) {
+      errors.push(`${entryPath}: materiali/ contiene solo file.`);
+    } else if (
+      !materialExtensions.includes(path.extname(entry.name).toLowerCase())
+    ) {
+      errors.push(
+        `${entryPath}: tipo di materiale non ammesso (${materialExtensions.join(', ')}).`,
+      );
+    }
+  }
+}
+
+async function validateWorkingText(textPath, lifecycle, errors) {
+  const { textFile, acceptedSidecars, materialsDirectory } =
+    contentContract.workspace;
+  if (!slugPattern.test(path.basename(textPath))) {
     errors.push(
-      `${articlePath}: working article directories must use lowercase hyphenated slugs.`,
+      `${textPath}: le cartelle del Workspace usano solo minuscole, cifre e trattini.`,
     );
   }
 
-  const entries = await readdir(articlePath, { withFileTypes: true });
-  const acceptedFiles = new Set([
-    contentContract.workspace.articleFile,
-    ...contentContract.workspace.acceptedSidecars,
-  ]);
-  for (const entry of entries) {
-    const entryPath = path.join(articlePath, entry.name);
-    if (
-      entry.isDirectory() ||
-      entry.isSymbolicLink() ||
-      !acceptedFiles.has(entry.name)
-    ) {
+  const accepted = new Set([textFile, ...acceptedSidecars]);
+  for (const entry of await readdir(textPath, { withFileTypes: true })) {
+    const entryPath = path.join(textPath, entry.name);
+    if (entry.isDirectory() && entry.name === materialsDirectory) {
+      await validateMaterials(entryPath, errors);
+    } else if (!entry.isFile() || !accepted.has(entry.name)) {
       errors.push(
-        `${entryPath}: unknown Workspace sidecar. Contract v${contentContract.version} accepts article.md and ${contentContract.workspace.acceptedSidecars.join(', ')}; migrate this file before continuing.`,
+        `${entryPath}: file non previsto. Il contratto v${contentContract.version} accetta ${[...accepted].join(', ')} e la cartella ${materialsDirectory}/.`,
       );
     }
   }
 
-  const articleFile = path.join(
-    articlePath,
-    contentContract.workspace.articleFile,
-  );
-  if (!(await exists(articleFile))) {
+  const textFilePath = path.join(textPath, textFile);
+  if (!(await exists(textFilePath))) {
+    errors.push(`${textPath}: manca ${textFile}.`);
+    return;
+  }
+  if (lifecycle === 'note') {
+    return;
+  }
+  const { data } = await readMarkdown(textFilePath, errors);
+  if (typeof data.id !== 'string' || !stableIdPattern.test(data.id)) {
     errors.push(
-      `${articlePath}: missing required ${contentContract.workspace.articleFile}.`,
+      `${textFilePath}: una Bozza ha un id UUID nel frontmatter, creato da pnpm bozza.`,
     );
-    return;
   }
-
-  if (lifecycle === 'notes') {
-    return;
-  }
-
-  const { data } = await readMarkdown(articleFile, errors);
-  validateStableId(data.id, articleFile, errors);
 }
 
 async function validateWorkspaceDirectory(workspaceDirectory, errors) {
   if (!(await exists(workspaceDirectory))) {
     return false;
   }
+  const { manifest, lifecycleDirectories } = contentContract.workspace;
 
-  const manifestPath = path.join(
-    workspaceDirectory,
-    contentContract.workspace.manifest,
-  );
-  if (!(await exists(manifestPath))) {
+  const manifestPath = path.join(workspaceDirectory, manifest);
+  try {
+    const parsed = JSON.parse(await readFile(manifestPath, 'utf8'));
+    if (!isPlainObject(parsed) || parsed.version !== contentContract.version) {
+      errors.push(
+        `${manifestPath}: atteso {"version": ${contentContract.version}}. Migra il Workspace prima di continuare.`,
+      );
+    }
+  } catch {
     errors.push(
-      `${workspaceDirectory}: missing ${contentContract.workspace.manifest} for content contract v${contentContract.version}.`,
+      `${manifestPath}: serve un JSON valido con la versione ${contentContract.version} del contratto.`,
     );
-  } else {
-    try {
-      const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-      if (
-        !isPlainObject(manifest) ||
-        manifest.version !== contentContract.version
-      ) {
-        errors.push(
-          `${manifestPath}: expected {"version": ${contentContract.version}}. Run the documented migration before continuing.`,
-        );
-      }
-    } catch {
-      errors.push(
-        `${manifestPath}: must contain valid JSON with content contract version ${contentContract.version}.`,
-      );
-    }
   }
 
-  const entries = await readdir(workspaceDirectory, { withFileTypes: true });
-  const allowedRootEntries = new Set([
-    contentContract.workspace.manifest,
-    ...contentContract.workspace.lifecycleDirectories,
+  const allowedRoot = new Set([
+    manifest,
+    ...lifecycleDirectories,
     '.git',
+    'README.md',
   ]);
-  for (const entry of entries) {
-    const entryPath = path.join(workspaceDirectory, entry.name);
-    if (!allowedRootEntries.has(entry.name)) {
+  for (const entry of await readdir(workspaceDirectory, {
+    withFileTypes: true,
+  })) {
+    if (!allowedRoot.has(entry.name)) {
       errors.push(
-        `${entryPath}: unknown Workspace entry under contract v${contentContract.version}.`,
-      );
-    }
-    if (entry.isSymbolicLink()) {
-      errors.push(
-        `${entryPath}: symbolic links are forbidden in the Workspace contract.`,
+        `${path.join(workspaceDirectory, entry.name)}: voce non prevista nel Workspace.`,
       );
     }
   }
 
-  for (const lifecycle of contentContract.workspace.lifecycleDirectories) {
+  for (const lifecycle of lifecycleDirectories) {
     const lifecycleDirectory = path.join(workspaceDirectory, lifecycle);
     if (!(await exists(lifecycleDirectory))) {
-      errors.push(
-        `${workspaceDirectory}: missing lifecycle directory ${lifecycle}.`,
-      );
       continue;
     }
-
-    const lifecycleEntries = await readdir(lifecycleDirectory, {
+    for (const entry of await readdir(lifecycleDirectory, {
       withFileTypes: true,
-    });
-    for (const entry of lifecycleEntries) {
+    })) {
       const entryPath = path.join(lifecycleDirectory, entry.name);
-      if (!entry.isDirectory() || entry.isSymbolicLink()) {
-        errors.push(
-          `${entryPath}: ${lifecycle} may contain only working article directories.`,
-        );
+      if (!entry.isDirectory()) {
+        if (entry.name !== '.gitkeep') {
+          errors.push(`${entryPath}: ${lifecycle}/ contiene solo cartelle.`);
+        }
         continue;
       }
-      await validateWorkspaceArticle(entryPath, lifecycle, errors);
+      await validateWorkingText(entryPath, lifecycle, errors);
     }
   }
-
   return true;
 }
 
@@ -462,114 +419,29 @@ async function assertWorkspaceIsPrivate(
   if (!(await exists(workspaceDirectory)) || !(await exists(postsDirectory))) {
     return;
   }
-
-  const [realPostsDirectory, realWorkspaceDirectory] = await Promise.all([
-    realpath(postsDirectory),
-    realpath(workspaceDirectory),
-  ]);
-  const relativeWorkspacePath = path.relative(
-    realPostsDirectory,
-    realWorkspaceDirectory,
+  const relative = path.relative(
+    await realpath(postsDirectory),
+    await realpath(workspaceDirectory),
   );
-  if (relativeWorkspacePath === '' || !relativeWorkspacePath.startsWith('..')) {
+  if (relative === '' || !relative.startsWith('..')) {
     errors.push(
-      `${workspaceDirectory}: Workspace must stay outside the public Posts directory.`,
+      `${workspaceDirectory}: il Workspace deve stare fuori dalla cartella dei Racconti.`,
     );
   }
 }
 
-// ADR 0020: an optional Italian translation of a public Post lives in
-// src/content/translations/it/<slug>.md, beside the Posts directory. It carries
-// only what changes with the language; everything else comes from the Post.
-export const translationLanguages = Object.freeze(['it']);
-const translationFields = new Set(['title', 'description', 'corrections']);
-
-function translationsDirectoryFor(postsDirectory) {
-  return path.join(path.dirname(postsDirectory), 'translations');
-}
-
-async function validateTranslationsDirectory(
-  translationsDirectory,
-  postsDirectory,
-  errors,
-) {
-  if (!(await exists(translationsDirectory))) {
-    return;
-  }
-  const entries = await readdir(translationsDirectory, { withFileTypes: true });
-  for (const entry of entries) {
-    const entryPath = path.join(translationsDirectory, entry.name);
-    if (!entry.isDirectory() || !translationLanguages.includes(entry.name)) {
-      errors.push(
-        `${entryPath}: translations live in one folder per language (${translationLanguages.join(', ')}).`,
-      );
-      continue;
-    }
-    for (const file of await readdir(entryPath, { withFileTypes: true })) {
-      const filePath = path.join(entryPath, file.name);
-      if (!file.isFile() || path.extname(file.name) !== markdownExtension) {
-        errors.push(
-          `${filePath}: only Markdown translation files are allowed.`,
-        );
-        continue;
-      }
-      const slug = path.basename(file.name, markdownExtension);
-      const postPath = path.join(postsDirectory, `${slug}.md`);
-      if (!(await exists(postPath))) {
-        errors.push(
-          `${filePath}: translates ${slug}, but there is no public Post with that slug.`,
-        );
-        continue;
-      }
-      const { data } = await readMarkdown(filePath, errors);
-      for (const field of Object.keys(data)) {
-        if (!translationFields.has(field)) {
-          errors.push(
-            `${filePath}: ${field} is not translation metadata; it comes from the Post.`,
-          );
-        }
-      }
-      requireString(data, 'title', filePath, errors);
-      requireString(data, 'description', filePath, errors);
-      const post = await readMarkdown(postPath, errors);
-      const original = post.data.corrections ?? [];
-      if ('corrections' in data) {
-        const translated = Array.isArray(data.corrections)
-          ? data.corrections
-          : [];
-        const matches =
-          translated.length === original.length &&
-          translated.every(
-            (correction, index) =>
-              isPlainObject(correction) &&
-              correction.date === original[index].date &&
-              correction.kind === original[index].kind &&
-              typeof correction.summary === 'string' &&
-              correction.summary.trim() !== '',
-          );
-        if (!matches) {
-          errors.push(
-            `${filePath}: corrections must translate every correction of the Post, with the same dates and kinds.`,
-          );
-        }
-      } else if (original.length > 0) {
-        errors.push(
-          `${filePath}: the Post has visible corrections, so the translation must translate them.`,
-        );
-      }
-    }
-  }
-}
+const defaultPostsDirectory = path.join(projectRoot, 'src/content/posts');
+const defaultWorkspaceDirectory = path.join(projectRoot, 'content/workspace');
 
 export async function validatePublicContent({
-  postsDirectory = path.join(projectRoot, 'src/content/posts'),
+  postsDirectory = defaultPostsDirectory,
 } = {}) {
   const errors = [];
-  const resolvedPostsDirectory = asPath(postsDirectory);
-  await validatePublicDirectory(resolvedPostsDirectory, errors);
+  const resolved = path.resolve(postsDirectory);
+  const racconti = await validatePublicDirectory(resolved, errors);
   await validateTranslationsDirectory(
-    translationsDirectoryFor(resolvedPostsDirectory),
-    resolvedPostsDirectory,
+    translationsDirectoryFor(resolved),
+    racconti,
     errors,
   );
   if (errors.length > 0) {
@@ -578,34 +450,31 @@ export async function validatePublicContent({
 }
 
 export async function validateContent({
-  postsDirectory = path.join(projectRoot, 'src/content/posts'),
-  workspaceDirectory = path.join(projectRoot, 'content/workspace'),
+  postsDirectory = defaultPostsDirectory,
+  workspaceDirectory = defaultWorkspaceDirectory,
   publicOnly = false,
 } = {}) {
   const errors = [];
-  const resolvedPostsDirectory = asPath(postsDirectory);
-  const resolvedWorkspaceDirectory = asPath(workspaceDirectory);
+  const resolvedPosts = path.resolve(postsDirectory);
+  const resolvedWorkspace = path.resolve(workspaceDirectory);
 
-  await validatePublicDirectory(resolvedPostsDirectory, errors);
+  const racconti = await validatePublicDirectory(resolvedPosts, errors);
   await validateTranslationsDirectory(
-    translationsDirectoryFor(resolvedPostsDirectory),
-    resolvedPostsDirectory,
+    translationsDirectoryFor(resolvedPosts),
+    racconti,
     errors,
   );
+  let workspacePresent = false;
   if (!publicOnly) {
-    await assertWorkspaceIsPrivate(
-      resolvedPostsDirectory,
-      resolvedWorkspaceDirectory,
+    await assertWorkspaceIsPrivate(resolvedPosts, resolvedWorkspace, errors);
+    workspacePresent = await validateWorkspaceDirectory(
+      resolvedWorkspace,
       errors,
     );
-    await validateWorkspaceDirectory(resolvedWorkspaceDirectory, errors);
   }
 
   if (errors.length > 0) {
     throw new ContentContractError(errors);
   }
-
-  return {
-    workspacePresent: !publicOnly && (await exists(resolvedWorkspaceDirectory)),
-  };
+  return { workspacePresent };
 }

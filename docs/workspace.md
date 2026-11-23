@@ -1,81 +1,68 @@
-# Private Workspace
+# Il Workspace privato
 
-`content/workspace/` is a separate, private Git repository for unpublished
-Notes, Drafts, Publication candidates, evidence ledgers, and editorial review
-records. It is ignored by this public repository. Do not force-add it, copy it
-into `src/content/posts/`, or place secrets, confidential sources, personal
-data, copyrighted source archives, or credentials in this repository.
+`content/workspace/` è un repository Git a sé, privato
+(`Paolocargnin/paoloscrive-workspace`), ignorato da questo repository pubblico.
+Contiene le Note e le Bozze finché Paolo non le pubblica (ADR 0001, ADR 0023).
+Non copiarlo in `src/content/`, non forzarne l'aggiunta qui e non metterci
+segreti o credenziali. GitHub privato è un backup con controllo degli accessi,
+non una cassaforte cifrata.
 
-GitHub private repositories provide versioned sync and access controls; they
-are not an end-to-end encrypted vault. Keep material that needs provider-blind
-confidentiality in a separate encrypted vault, as required by ADR 0001.
-
-## First-time setup
-
-After creating the private `Paolocargnin/blog-workspace` repository and adding
-the intended collaborator, initialize the stable local path:
+## Primo avvio su un nuovo computer
 
 ```sh
-pnpm workspace:init -- --remote git@github.com:Paolocargnin/blog-workspace.git
-git -C content/workspace add content-contract.json
-git -C content/workspace commit -m "chore: initialize editorial workspace"
-git -C content/workspace push -u origin main
-```
-
-The private repository intentionally contains only the contract until a Note
-is captured. Git does not retain empty directories; the lifecycle commands
-create them locally as needed.
-
-## Lifecycle commands
-
-```sh
-pnpm workspace:create -- --slug an-article-idea
-pnpm workspace:develop -- --slug an-article-idea
-pnpm editorial:create -- --slug an-article-idea --kind brief
-pnpm editorial:create -- --slug an-article-idea --kind sources
+git clone git@github.com:Paolocargnin/paoloscrive-workspace.git content/workspace
 pnpm workspace:validate
-pnpm workspace:promote -- --slug an-article-idea --approved-by "Paolo Cargnin"
-pnpm editorial:status -- --slug an-article-idea
-pnpm editorial:check -- --slug an-article-idea
-pnpm editorial:digest -- --slug an-article-idea
-pnpm workspace:publish -- --slug an-article-idea --approved-by "Paolo Cargnin" --approved-digest <digest>
-pnpm workspace:return -- --slug an-article-idea
 ```
 
-`workspace:create` creates a raw Note. `workspace:develop` preserves its raw
-fragments in `notes.md`, creates the Draft `article.md`, and assigns its stable
-UUID. `workspace:promote` validates a content-complete Draft and moves it to a
-Publication candidate only after the named human explicitly approves it.
-`workspace:publish` rechecks the independent fact-check, resolved
-counter-discussion, public Sources proposal, and publication package before it
-copies an approved candidate to `src/content/posts/`. The approved digest binds
-the named human decision and every review record to the exact candidate and
-optional private ledger; any later edit makes approval stale. The command never
-overwrites a Post and still requires a reviewed publication pull request before
-merge.
+Per creare da zero un Workspace vuoto (solo la prima volta in assoluto):
+`pnpm workspace:init -- --remote <url del repository privato>`.
 
-`workspace:return` moves a candidate back to Draft when substantive work is
-needed and invalidates its review evidence. Use `$blog-workflow` or
-`pnpm editorial:status` when the next stage is unclear. See the
-[editorial skill suite](editorial-skills.md) for the full router and evidence
-contract.
+## La forma
 
-The approval flag is intentionally not a shorthand for agent approval. An AI
-must stop and ask a human to inspect the work and run or expressly authorize
-the approved command.
+```text
+content/workspace/
+  content-contract.json      versione del contratto (3)
+  note/<slug>/testo.md       una Nota: idea, scena, dialogo
+  note/<slug>/materiali/     memo vocali, foto del taccuino, scansioni
+  bozze/<slug>/testo.md      una Bozza, con id e metadati del Racconto
+  bozze/<slug>/appunti.md    la Nota da cui è nata
+  bozze/<slug>/lettura-critica.md   facoltativa
+  pubblicati/<slug>/         la cartella di lavoro di un Racconto uscito
+```
 
-## Sync, conflicts, and recovery
+## I comandi
 
-Before editing, run `git -C content/workspace pull --ff-only`. Commit each
-meaningful writing or review step, then push it to the private remote. When a
-pull reports a conflict, stop editing the conflicting files, inspect both
-versions, preserve the source and review evidence from each, resolve the
-conflict deliberately, run `pnpm workspace:validate`, then commit the
-resolution. Never use a force push for shared editorial history.
+```sh
+pnpm nota -- --slug il-faro
+pnpm bozza -- --slug il-faro
+pnpm pubblica -- --slug il-faro --approved-by "Paolo Cargnin"
+pnpm firma -- --slug il-faro --lang en --signed-by "Paolo Cargnin"
+pnpm workspace:validate
+```
 
-If a device is lost or the local workspace is corrupted, clone the private
-remote back into `content/workspace/`, run `pnpm workspace:validate`, and use
-Git history to recover a known-good revision. If the remote itself is
-unavailable, restore from an independently maintained encrypted backup. Public
-Git history and deployment artifacts are not a backup for private workspace
-material.
+- `nota` crea `note/<slug>/testo.md`.
+- `bozza` sposta la Nota in `bozze/`, la conserva come `appunti.md` e crea un
+  `testo.md` con un `id` stabile e i metadati vuoti da riempire.
+- `pubblica` controlla i metadati, copia `testo.md` in
+  `src/content/posts/<slug>.md` con la data di oggi se manca `publishedAt`, non
+  sovrascrive mai un Racconto e archivia la cartella in `pubblicati/`. Il
+  Racconto va online con il merge della pull request su `main`.
+- `firma` firma una Traduzione già riletta (ADR 0022).
+
+`--approved-by` e `--signed-by` non sono scorciatoie per un agente: un'IA si
+ferma e chiede a Paolo di lanciare il comando, o di autorizzarlo con parole
+sue.
+
+## Le skill
+
+- `$racconti` accompagna un testo lungo tutto il percorso: Nota, Bozza,
+  Pubblicazione, Traduzione, Firma, Revisione.
+- `$lettura-critica` scrive in `lettura-critica.md` cosa non funziona in una
+  Bozza, senza riscriverla.
+
+## Sincronizzare
+
+Prima di lavorare, `git -C content/workspace pull --ff-only`. Fai commit di ogni
+passo che conta e fai push. Se un pull va in conflitto, fermati, confronta le
+due versioni, risolvi a mano, lancia `pnpm workspace:validate` e fai commit.
+Mai un force push. Se il computer si perde, si riclona il repository privato.

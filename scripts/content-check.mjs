@@ -29,6 +29,6 @@ const options = {
 const { workspacePresent } = await validateContent(options);
 console.log(
   publicOnly || !workspacePresent
-    ? `Public Posts satisfy content contract v${contentContract.version}.`
-    : `Public Posts and Workspace satisfy content contract v${contentContract.version}.`,
+    ? `I Racconti pubblici rispettano il contratto v${contentContract.version}.`
+    : `Racconti pubblici e Workspace rispettano il contratto v${contentContract.version}.`,
 );

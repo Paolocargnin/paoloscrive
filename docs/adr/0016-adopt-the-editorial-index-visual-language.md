@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: "under review — paoloscrive uses the provisional Taccuino direction until Paolo chooses one (docs/design/proposte.html)"
 ---
 
 # Adopt the editorial index visual language

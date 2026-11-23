@@ -1,59 +1,75 @@
 /**
  * The single, versioned content contract shared by local checks and the
  * production build. Changes here require a migration plan for existing
- * Workspace articles (ADR 0004).
+ * Workspace texts (ADR 0004).
+ *
+ * Version 3 is the first contract of Paolo scrive:
+ * - every Post is a Racconto with an original language (ADR 0021, ADR 0022);
+ * - a Translation lives beside it and carries its own Firma (ADR 0022);
+ * - the Workspace path is Nota → Bozza → pubblicato (ADR 0023);
+ * - a substantive change is a Revisione, shown as "Rivisto il" (ADR 0024).
  */
-export const CONTENT_CONTRACT_VERSION = 2;
+export const CONTENT_CONTRACT_VERSION = 3;
 
 export const contentContract = Object.freeze({
   version: CONTENT_CONTRACT_VERSION,
   workspace: Object.freeze({
     manifest: 'content-contract.json',
-    lifecycleDirectories: Object.freeze([
-      'notes',
-      'drafts',
-      'publication-candidates',
-    ]),
-    articleFile: 'article.md',
-    acceptedSidecars: Object.freeze([
-      'brief.md',
-      'sources.md',
-      'notes.md',
-      'fact-check.md',
-      'counter-discussion.md',
-      'publication-check.md',
+    lifecycleDirectories: Object.freeze(['note', 'bozze', 'pubblicati']),
+    textFile: 'testo.md',
+    acceptedSidecars: Object.freeze(['appunti.md', 'lettura-critica.md']),
+    materialsDirectory: 'materiali',
+    materialExtensions: Object.freeze([
+      '.m4a',
+      '.mp3',
+      '.wav',
+      '.ogg',
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.webp',
+      '.heic',
+      '.pdf',
+      '.txt',
+      '.md',
     ]),
   }),
+  languages: Object.freeze({
+    it: Object.freeze({ name: 'italiano', ownName: 'Italiano' }),
+    en: Object.freeze({ name: 'inglese', ownName: 'English' }),
+  }),
+  defaultLanguage: 'it',
   tags: Object.freeze({
-    ai: 'AI',
-    blogging: 'Blogging',
-    craft: 'Craft',
-    design: 'Design',
-    devlog: 'Devlog',
-    engineering: 'Engineering',
-    games: 'Games',
-    systems: 'Systems',
-    writing: 'Writing',
+    famiglia: 'Famiglia',
+    fantastico: 'Fantastico',
+    giochi: 'Giochi',
+    lavoro: 'Lavoro',
+    memoria: 'Memoria',
+    quotidiano: 'Quotidiano',
+    viaggio: 'Viaggio',
   }),
-  post: Object.freeze({
+  racconto: Object.freeze({
     requiredMetadata: Object.freeze([
       'id',
       'title',
       'description',
       'publishedAt',
-      'tags',
     ]),
-    optionalMetadata: Object.freeze([
-      'updatedAt',
-      'corrections',
-      'sources',
-      'aiGenerated',
-    ]),
+    optionalMetadata: Object.freeze(['lang', 'tags', 'revisedAt']),
+    maxTags: 4,
+  }),
+  translation: Object.freeze({
+    requiredMetadata: Object.freeze(['title', 'description', 'basedOn']),
+    optionalMetadata: Object.freeze(['signedBy', 'signedAt']),
   }),
 });
 
 export const controlledTagIds = Object.freeze(
   Object.keys(contentContract.tags),
+);
+
+export const languageCodes = Object.freeze(
+  Object.keys(contentContract.languages),
 );
 
 export const stableIdPattern =

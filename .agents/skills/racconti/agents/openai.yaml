@@ -1,0 +1,6 @@
+interface:
+  display_name: "Racconti"
+  short_description: "Nota, Bozza, Racconto, Traduzione e Firma"
+  default_prompt: "Use $racconti to move a text of Paolo scrive along its path."
+policy:
+  allow_implicit_invocation: false

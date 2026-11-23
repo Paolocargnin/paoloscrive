@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded by ADR 0022
 ---
 
 # Offer Italian translations of Posts

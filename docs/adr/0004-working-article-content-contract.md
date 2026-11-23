@@ -1,3 +1,7 @@
+---
+status: accepted, amended by ADR 0023
+---
+
 # Treat the working-article layout as a content contract
 
 Each working article is a directory whose prose lives in `article.md`; the accepted optional sidecars are `brief.md`, `sources.md`, `notes.md`, `fact-check.md`, `counter-discussion.md`, and `publication-check.md`. Not every article needs every sidecar, but other filenames are rejected by validation. Structural changes require an explicit discussion and migration plan that accounts for existing articles and backward compatibility.

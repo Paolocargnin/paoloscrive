@@ -1,65 +1,54 @@
-# PC - the blog
+# Paolo scrive
 
-The public Astro site for PC - the blog. Unpublished writing remains in the
-private `content/workspace/` repository and must never be committed here.
+Il blog dei racconti di Paolo Cargnin, in italiano e in inglese. È un sito
+Astro pre-renderizzato, nato come fork di
+[PC – the blog](https://github.com/Paolocargnin/blog) (ADR 0021): qui solo ciò
+che scrive Paolo, là progetti, codice e lavoro.
 
-## Local development
+Le Note e le Bozze stanno nel Workspace privato in `content/workspace/`, un
+repository separato che non va mai aggiunto a questo. Vedi
+[il Workspace](docs/workspace.md).
 
-Use Node 24.11.1 and pnpm 10.32.1, then install dependencies with `pnpm
-install`.
+## Sviluppo locale
 
-- `pnpm dev` — run the local development server.
-- `pnpm format` — check formatting.
-- `pnpm type-check` — run strict Astro and TypeScript checks.
-- `pnpm test` — run representative automated tests.
-- `pnpm content:check` — validate public Posts and the local Workspace when it
-  is present.
-- `pnpm content:check:public` — validate only public Posts, as production does.
-- `pnpm workspace:validate` — validate the local private Workspace contract.
-- `pnpm build` — validate and create a production build from public Posts only.
-- `pnpm quality` — run all required checks.
+Node 24.11.1 e pnpm 10.32.1, poi `pnpm install`.
 
-See [the private Workspace guide](docs/workspace.md) for setup, lifecycle,
-sync, recovery, and sensitive-source boundaries.
+- `pnpm dev`: server locale.
+- `pnpm quality`: tutti i controlli richiesti (formato, tipi, test, skill,
+  contenuti, build, link).
+- `pnpm content:check`: controlla Racconti, Traduzioni e, se c'è, il Workspace.
+- `pnpm build`: build di produzione dai soli Racconti pubblici.
 
-Use `$blog-workflow` when an article's next editorial step is unclear. Use
-`$daily-blogs-publish` for AI-generated project updates (ADR 0019): it writes
-them from recent Claude sessions and publishes them behind a visible notice
-until Paolo reviews them. The
-[editorial skill suite](docs/editorial-skills.md) documents the router, review
-evidence, human gates, and deterministic lifecycle commands.
+## Scrivere
 
-## Publishing configuration
+Il percorso è Nota → Bozza → Racconto (ADR 0023):
 
-The site exposes RSS at `/rss.xml`, a generated sitemap index at
-`/sitemap-index.xml`, and `robots.txt`. Canonical URLs and social metadata use
-`PUBLIC_SITE_URL`; the Cloudflare Worker production environment should set it
-to `https://pctb.it`, the canonical HTTPS origin. It also falls back to that
-origin when the environment variable is not set.
+```sh
+pnpm nota -- --slug il-faro
+pnpm bozza -- --slug il-faro
+pnpm pubblica -- --slug il-faro --approved-by "Paolo Cargnin"
+```
 
-Cloudflare Web Analytics is intentionally opt-in and production-only. Add the
-following production environment value in the Cloudflare dashboard after
-creating the Analytics site:
+Un Racconto è `src/content/posts/<slug>.md`, servito a `/racconti/<slug>/`. Ha
+una lingua originale (`lang`, italiano se manca) e può avere una Traduzione in
+`src/content/translations/<lang>/<slug>.md`, servita a `/racconti/<slug>/<lang>/`.
+Una Traduzione fatta dall'IA mostra un avviso finché Paolo non la firma con
+`pnpm firma` (ADR 0022). Una modifica sostanziale dopo la pubblicazione si
+segna con `revisedAt` e compare come «Rivisto il» (ADR 0024).
 
-- `PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN` — the public Cloudflare beacon token.
+Le skill `$racconti` e `$lettura-critica` guidano un agente lungo questo
+percorso.
 
-Do not configure that value for Preview deployments or local development. Do
-not also enable one-click Web Analytics injection: this site renders the beacon
-itself to keep its environment boundary explicit. The token is public browser
-configuration, but it is not committed. See `.env.example` for the complete,
-secret-free environment contract and [Editorial process](/editorial/) for the
-publication policy.
+## Grafica
 
-## Cloudflare deployment
+Il sito usa per ora la direzione «Taccuino»: inchiostro su carta, tratteggio,
+Bodoni Moda e Literata, e il blu solo per una storia dentro la storia. Le
+alternative sono in [docs/design/proposte.html](docs/design/proposte.html). La
+scelta definitiva sostituirà l'ADR 0016.
 
-The site is a pre-rendered Astro application served as static assets by the
-`blog` Cloudflare Worker. It does not use Astro's Cloudflare SSR adapter.
+## Pubblicazione e deploy
 
-- `pnpm preview:cloudflare` — build and preview the static Worker locally.
-- `pnpm deploy` — build and deploy the static Worker.
-
-Cloudflare Workers Builds should use `pnpm build` as its build command and
-`npx wrangler deploy` as its deploy command. The checked-in `wrangler.jsonc`
-prevents Cloudflare's automatic Astro setup from converting the site to SSR.
-See [deployment and recovery](docs/deployment.md) for connected-repository
-previews, production configuration, rollback, and emergency recovery.
+`main` è il confine della pubblicazione: ci si arriva solo con una pull request
+che passa il controllo **Quality**, e il merge lo fa Paolo. Il sito è servito
+come asset statici dal Worker Cloudflare `paoloscrive`; prima del primo deploy
+va impostato `PUBLIC_SITE_URL`. Vedi [deploy e ripristino](docs/deployment.md).

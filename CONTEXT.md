@@ -1,57 +1,61 @@
-# Personal Blog
+# paoloscrive
 
-The blog is a public body of published writing supported by a private local workspace for developing ideas into articles.
+Il blog personale di Paolo Cargnin dedicato alla scrittura creativa: i suoi racconti e il percorso creativo che c'è dietro. Pubblica solo ciò che Paolo scrive, e per ora soltanto Racconti; progetti, codice, lavoro e devlog restano su PC – the blog.
 
-## Language
+## Linguaggio
 
-**Author**:
-The person publicly accountable for a Post's claims and presented by the blog as its author; for this publication, the Author is Paolo Cargnin.
-_Avoid_: Drafter, pull-request author
-
-**Reviewer**:
-The person other than the pull-request author who evaluates a publication change and provides the required approval.
-_Avoid_: Author, proofreader
+**Racconto**:
+Un testo narrativo di finzione dell'Autore, pubblicato su paoloscrive; è l'unità di pubblicazione del blog.
+_Avoid_: Storia, post, articolo
 
 **Workspace**:
-The private collection of unpublished notes, drafts, and material undergoing review.
-_Avoid_: Private posts, unpublished content
+L'insieme privato di Note e Bozze non ancora pubblicate, tenuto separato dal blog.
+_Avoid_: Note private, archivio
 
-**Note**:
-Raw material that may contribute to an article but has not yet committed to an article-shaped argument.
-_Avoid_: Draft, post
+**Nota**:
+Materiale grezzo, come un'idea, una scena o una frase, che potrebbe diventare un Racconto ma non lo è ancora.
+_Avoid_: Appunto, bozza
 
-**Draft**:
-An unpublished article whose argument and presentation are still being developed.
-_Avoid_: Note, post
+**Materiali**:
+Ciò che sta accanto a una Nota o a una Bozza senza esserne il testo: un memo vocale, la foto di una pagina del taccuino, una trascrizione. Restano nel Workspace e non vengono mai pubblicati.
+_Avoid_: Allegati, fonti
 
-**Publication candidate**:
-A content-complete article undergoing source verification, fact-checking, link checks, metadata checks, accessibility review, and final proofreading. Substantive rewriting returns it to Draft.
-_Avoid_: Review, final draft
+**Bozza**:
+Un Racconto in lavorazione nel Workspace, non ancora pubblicato.
+_Avoid_: Draft, candidato
 
-**Fact-checking pass**:
-An independent verification of factual claims against attributable sources before publication.
-_Avoid_: Proofreading, AI review
+**Lettura critica**:
+Un parere facoltativo su una Bozza, dato da un'AI o da una persona, che indica cosa non funziona senza riscrivere il testo.
+_Avoid_: Editing, revisione, contro-discussione
 
-**Counter-discussion pass**:
-An adversarial review that challenges the article's thesis, evidence, assumptions, missing perspectives, and strongest plausible objections before publication.
-_Avoid_: Fact-checking, tone review
+**Pubblicazione**:
+Il gesto con cui l'Autore porta una Bozza nel blog come Racconto; lo compie sempre lui, mai un'AI.
+_Avoid_: Promozione, rilascio
 
-**Tag**:
-A controlled topic label used to connect related Posts. Each Tag has one stable identifier and one display label.
-_Avoid_: Category, free-form keyword
+**Revisione**:
+Una modifica sostanziale a un Racconto già pubblicato, come un finale, una scena o un personaggio, segnalata ai lettori da una riga datata "Rivisto il"; la correzione di un refuso non è una Revisione.
+_Avoid_: Correzione, errata, nuova versione
 
-**Correction**:
-A post-publication change that alters a factual claim or the meaning a reader takes from a Post, accompanied by a visible dated explanation.
-_Avoid_: Typo fix, silent edit
+**Lingua originale**:
+La lingua in cui l'Autore ha scritto per primo un Racconto, italiano o inglese; ogni Racconto ne ha una sola, scelta racconto per racconto.
+_Avoid_: Lingua principale, lingua del sito
 
-**AI-generated Post**:
-A Post that Claude wrote on its own from Paolo's work sessions, published with a visible notice until Paolo reviews it (ADR 0019).
-_Avoid_: Draft, ghostwritten Post
+**Traduzione**:
+Un Racconto in una lingua diversa dalla sua Lingua originale, che dal Racconto eredita tutto tranne le parole. La può fare l'AI, ma finché l'Autore non la firma porta un avviso visibile.
+_Avoid_: Versione, localizzazione
 
-**Translation**:
-The Italian version of a Post, served beside it at /it/posts/<slug>/, which inherits everything but its words from the Post (ADR 0020).
-_Avoid_: Italian Post, localised copy
+**Firma**:
+L'approvazione esplicita con cui l'Autore fa sua una Traduzione dopo averla riletta, anche senza cambiarne una parola; toglie l'avviso e registra chi ha firmato e quando.
+_Avoid_: Revisione, review, approvazione AI
 
-**Post**:
-An article that has entered the public body of published work.
-_Avoid_: Draft, content item
+**Autore**:
+La persona che firma ogni testo pubblicato e ne risponde; per paoloscrive è sempre Paolo Cargnin, che di quel testo è anche lo scrittore.
+_Avoid_: Redattore, ghostwriter
+
+**PC – the blog**:
+La pubblicazione sorella da cui paoloscrive è nato, che resta il posto per progetti, codice, lavoro e devlog. Un testo sul *come ho scritto* qualcosa sta su paoloscrive; un testo sul *come l'ho costruito* sta su PC – the blog.
+_Avoid_: Il vecchio blog, blog tecnico
+
+**Tema**:
+Un'etichetta del vocabolario controllato che collega Racconti vicini, come Memoria o Lavoro; un Racconto ne ha da zero a quattro.
+_Avoid_: Tag, categoria

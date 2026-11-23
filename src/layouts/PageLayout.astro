@@ -1,0 +1,79 @@
+---
+/** The shell of every page that is not a Post: header, a wide column, footer. */
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <SiteHeader slot="header" currentPath={Astro.url.pathname} />
+  <div class="page"><slot /></div>
+  <SiteFooter slot="footer" />
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 72rem;
+    min-height: 60vh;
+    margin-inline: auto;
+    padding: clamp(3rem, 8vw, 6rem) var(--gutter) clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .page :global(.empty) {
+    max-width: 34rem;
+    margin: 0;
+    color: var(--faded);
+    font-style: italic;
+  }
+
+  .page :global(.section + .section) {
+    margin-top: clamp(3rem, 7vw, 4.5rem);
+  }
+
+  .page :global(.section-title) {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 1.4rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--ink);
+    font-family: var(--display);
+    font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+    font-weight: 700;
+  }
+
+  .page :global(.section-title a) {
+    font-family: var(--text);
+    font-size: 0.95rem;
+    font-variant-caps: all-small-caps;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+  }
+
+  .page :global(.prose) {
+    max-width: var(--measure);
+    font-size: clamp(1.06rem, 1rem + 0.25vw, 1.2rem);
+    line-height: 1.72;
+  }
+
+  .page :global(.prose h2) {
+    margin: 2.2em 0 0.5em;
+    font-family: var(--display);
+    font-size: 1.6em;
+    font-weight: 700;
+    line-height: 1.05;
+  }
+
+  .page :global(.prose p) {
+    margin: 0 0 1.1em;
+    text-wrap: pretty;
+  }
+</style>

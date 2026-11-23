@@ -1,16 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { postsWithTag, sortPostsNewestFirst } from '../src/lib/posts';
+import {
+  postNumber,
+  postsWithTag,
+  postUrl,
+  sortPostsNewestFirst,
+} from '../src/lib/posts';
 
-const post = (id: string, publishedAt: string, tags: string[]) =>
-  ({ id, data: { publishedAt: new Date(publishedAt), tags } }) as never;
+const post = (
+  id: string,
+  publishedAt: string,
+  tags: string[] = [],
+  lang = 'it',
+) =>
+  ({ id, data: { publishedAt: new Date(publishedAt), tags, lang } }) as never;
 
-describe('Post collection helpers', () => {
-  it('orders representative Posts by newest publication date', () => {
-    const posts = [
-      post('older', '2025-01-01', ['writing']),
-      post('newer', '2026-01-01', ['ai']),
-    ];
+describe('Racconto helpers', () => {
+  it('orders Racconti by newest publication date', () => {
+    const posts = [post('older', '2025-01-01'), post('newer', '2026-01-01')];
 
     expect(sortPostsNewestFirst(posts).map((entry) => entry.id)).toEqual([
       'newer',
@@ -18,12 +25,33 @@ describe('Post collection helpers', () => {
     ]);
   });
 
-  it('selects only Posts using the requested controlled Tag', () => {
+  it('numbers Racconti from the oldest, whatever the list order', () => {
     const posts = [
-      post('one', '2026-01-01', ['writing']),
-      post('two', '2026-01-02', ['ai', 'writing']),
+      post('terzo', '2026-03-01'),
+      post('primo', '2026-01-01'),
+      post('secondo', '2026-02-01'),
     ];
 
-    expect(postsWithTag(posts, 'ai').map((entry) => entry.id)).toEqual(['two']);
+    expect(postNumber(posts[0], posts)).toBe(3);
+    expect(postNumber(posts[1], posts)).toBe(1);
+  });
+
+  it('selects only Racconti with the requested Tema', () => {
+    const posts = [
+      post('one', '2026-01-01', ['memoria']),
+      post('two', '2026-01-02', ['lavoro', 'memoria']),
+    ];
+
+    expect(postsWithTag(posts, 'lavoro').map((entry) => entry.id)).toEqual([
+      'two',
+    ]);
+  });
+
+  it('serves a Translation under its Racconto', () => {
+    const racconto = post('il-faro', '2026-01-01');
+
+    expect(postUrl(racconto)).toBe('/racconti/il-faro/');
+    expect(postUrl(racconto, 'en')).toBe('/racconti/il-faro/en/');
+    expect(postUrl(racconto, 'it')).toBe('/racconti/il-faro/');
   });
 });

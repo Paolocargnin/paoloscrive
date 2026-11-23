@@ -7,6 +7,4 @@ import { validateWorkspace } from './workspace-lib.mjs';
 
 const options = optionsFromArguments();
 await validateWorkspace(workspaceFromOptions(options));
-console.log(
-  `Workspace satisfies content contract v${contentContract.version}.`,
-);
+console.log(`Il Workspace rispetta il contratto v${contentContract.version}.`);

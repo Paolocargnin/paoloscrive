@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+
+import PageHeading from '../../components/PageHeading.astro';
+import PostIndex from '../../components/PostIndex.astro';
+import { controlledTagIds } from '../../content/contract.mjs';
+import PageLayout from '../../layouts/PageLayout.astro';
+import { postsWithTag, sortPostsNewestFirst, tagLabel } from '../../lib/posts';
+
+export function getStaticPaths() {
+  return controlledTagIds.map((tag) => ({ params: { tag } }));
+}
+
+const tag = Astro.params.tag!;
+const allPosts = await getCollection('posts');
+const posts = sortPostsNewestFirst(postsWithTag(allPosts, tag));
+const label = tagLabel(tag);
+---
+
+<PageLayout title={label} description={`I racconti sul tema ${label}.`}>
+  <PageHeading label="Tema" title={label} />
+  {
+    posts.length > 0 ? (
+      <PostIndex posts={posts} allPosts={allPosts} label={`Racconti sul tema ${label}`} />
+    ) : (
+      <p class="empty">Ancora niente su questo tema.</p>
+    )
+  }
+</PageLayout>

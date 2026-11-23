@@ -1,0 +1,80 @@
+---
+import { getCollection } from 'astro:content';
+
+import PageHeading from '../../components/PageHeading.astro';
+import { controlledTagIds } from '../../content/contract.mjs';
+import PageLayout from '../../layouts/PageLayout.astro';
+import { postsWithTag, tagLabel } from '../../lib/posts';
+
+const allPosts = await getCollection('posts');
+const themes = controlledTagIds.map((tag) => ({
+  tag,
+  label: tagLabel(tag),
+  count: postsWithTag(allPosts, tag).length,
+}));
+---
+
+<PageLayout title="Temi" description="I temi che attraversano i racconti.">
+  <PageHeading label="Vocabolario controllato" title="Temi">
+    <p>Pochi temi, sempre gli stessi, per ritrovare i racconti che si parlano tra loro.</p>
+  </PageHeading>
+  <ul class="themes" aria-label="Tutti i temi">
+    {
+      themes.map(({ tag, label, count }) => (
+        <li>
+          <a href={`/temi/${tag}/`}>{label}</a>
+          <span class="leader" aria-hidden="true" />
+          <span class="count">{count}<span class="visually-hidden"> {count === 1 ? 'racconto' : 'racconti'}</span></span>
+        </li>
+      ))
+    }
+  </ul>
+</PageLayout>
+
+<style>
+  .themes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: 0.9rem 3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+  }
+
+  li a {
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  li a:hover {
+    text-decoration: underline;
+  }
+
+  .leader {
+    flex: 1;
+    border-bottom: 2px dotted var(--faded);
+    transform: translateY(-0.3em);
+  }
+
+  .count {
+    font-family: var(--display);
+    font-variant-numeric: lining-nums tabular-nums;
+    font-weight: 700;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

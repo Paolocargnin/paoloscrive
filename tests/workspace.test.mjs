@@ -3,57 +3,43 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { candidateDigest, editorialStatus } from '../scripts/editorial-lib.mjs';
+import { optionsFromArguments } from '../scripts/workspace-cli.mjs';
 import {
   createNote,
   developNote,
-  promoteDraft,
-  publishCandidate,
+  publishDraft,
   scaffoldWorkspace,
+  signTranslation,
   validateWorkspace,
 } from '../scripts/workspace-lib.mjs';
-import { optionsFromArguments } from '../scripts/workspace-cli.mjs';
+import { parseMarkdownDocument } from '../scripts/markdown-lib.mjs';
 
 const temporaryDirectories = [];
 
-async function createWorkspace() {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'pc-blog-workspace-'));
+async function project() {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'paoloscrive-'));
   temporaryDirectories.push(directory);
-  const workspace = path.join(directory, 'workspace');
+  const workspace = path.join(directory, 'content', 'workspace');
+  const postsDirectory = path.join(directory, 'src', 'content', 'posts');
   await scaffoldWorkspace(workspace);
-  return { directory, workspace };
+  await mkdir(postsDirectory, { recursive: true });
+  return { workspace, postsDirectory };
 }
 
-async function writeCompleteCandidateEvidence({
-  workspace,
-  candidateDirectory,
-  slug,
-  includeSources = true,
-}) {
-  if (includeSources) {
-    await writeFile(
-      path.join(candidateDirectory, 'sources.md'),
-      '# Private source ledger\n\nNo external claims in this fixture.\n',
-      'utf8',
-    );
-  }
-  const digest = await candidateDigest({ workspace, slug });
-  await writeFile(
-    path.join(candidateDirectory, 'fact-check.md'),
-    `---\nworkflowVersion: 1\nreviewedBy: Independent Checker\nreviewedAt: 2026-07-31\ncandidateDigest: ${digest}\nindependent: true\nstatus: passed\n---\n\n# Fact-check\n\nEvery fixture claim was checked.\n`,
-    'utf8',
+async function writeDraftText(workspace, slug, data) {
+  const file = path.join(workspace, 'bozze', slug, 'testo.md');
+  const { data: current } = parseMarkdownDocument(
+    await readFile(file, 'utf8'),
+    file,
   );
-  await writeFile(
-    path.join(candidateDirectory, 'counter-discussion.md'),
-    `---\nworkflowVersion: 1\nreviewedBy: Adversarial Reviewer\nreviewedAt: 2026-07-31\ncandidateDigest: ${digest}\nstatus: resolved\nfindings: []\n---\n\n# Counter-discussion\n\nNo material objection remained.\n`,
-    'utf8',
-  );
-  await writeFile(
-    path.join(candidateDirectory, 'publication-check.md'),
-    `---\nworkflowVersion: 1\npreparedBy: Paolo Cargnin\npreparedAt: 2026-07-31\ncandidateDigest: ${digest}\nstatus: ready\nsourcesProposal: omitted\nsourcesRationale: This disposable fixture contains no external claims.\naiDisclosure: not-material\naiDisclosureRationale: No material AI contribution exists in this fixture.\n---\n\n# Publication check\n\nThe fixture package is ready.\n`,
-    'utf8',
-  );
-  return digest;
+  const frontmatter = Object.entries({ ...current, ...data })
+    .map(([key, value]) =>
+      Array.isArray(value)
+        ? `${key}: [${value.join(', ')}]`
+        : `${key}: ${JSON.stringify(value)}`,
+    )
+    .join('\n');
+  await writeFile(file, `---\n${frontmatter}\n---\n\nIl testo.\n`, 'utf8');
 }
 
 afterEach(async () => {
@@ -64,181 +50,154 @@ afterEach(async () => {
   );
 });
 
-describe('private Workspace lifecycle', () => {
-  it("accepts pnpm's argument separator before command options", () => {
-    expect(
-      optionsFromArguments(['--', '--workspace', 'private', '--slug', 'idea']),
-    ).toEqual(
-      new Map([
-        ['--workspace', 'private'],
-        ['--slug', 'idea'],
-      ]),
+describe('Workspace: Nota → Bozza → Racconto', () => {
+  it('turns a Nota into a Bozza and keeps the Nota as appunti', async () => {
+    const { workspace } = await project();
+    await createNote({ workspace, slug: 'il-faro' });
+    await writeFile(
+      path.join(workspace, 'note', 'il-faro', 'testo.md'),
+      'Una luce che aspetta.\n',
     );
+
+    const draft = await developNote({ workspace, slug: 'il-faro' });
+
+    expect(await readFile(path.join(draft, 'appunti.md'), 'utf8')).toBe(
+      'Una luce che aspetta.\n',
+    );
+    const { data } = parseMarkdownDocument(
+      await readFile(path.join(draft, 'testo.md'), 'utf8'),
+      'testo.md',
+    );
+    expect(data.id).toMatch(/^[0-9a-f-]{36}$/);
+    await expect(validateWorkspace(workspace)).resolves.toBeUndefined();
   });
 
-  it('creates a Note, assigns a stable id when developing it, and validates the result', async () => {
-    const { workspace } = await createWorkspace();
+  it('will not publish without the Autore’s name', async () => {
+    const { workspace, postsDirectory } = await project();
+    await createNote({ workspace, slug: 'il-faro' });
+    await developNote({ workspace, slug: 'il-faro' });
 
-    await createNote({ workspace, slug: 'a-promising-idea' });
-    await writeFile(
-      path.join(workspace, 'notes', 'a-promising-idea', 'notes.md'),
-      'Existing supporting context.\n',
-      'utf8',
-    );
-    await developNote({ workspace, slug: 'a-promising-idea' });
-    await validateWorkspace(workspace);
-
-    const article = await readFile(
-      path.join(workspace, 'drafts', 'a-promising-idea', 'article.md'),
-      'utf8',
-    );
-    expect(article).toMatch(/^---\nid: [0-9a-f-]{36}\n---/);
-    const preservedNotes = await readFile(
-      path.join(workspace, 'drafts', 'a-promising-idea', 'notes.md'),
-      'utf8',
-    );
-    expect(preservedNotes).toContain('Existing supporting context.');
-    expect(preservedNotes).toContain('# a promising idea');
+    await expect(
+      publishDraft({ workspace, postsDirectory, slug: 'il-faro' }),
+    ).rejects.toThrow("Questo comando lo esegue l'Autore");
   });
 
-  it('will not promote a Draft without a named human approval', async () => {
-    const { workspace } = await createWorkspace();
-    await createNote({ workspace, slug: 'needs-review' });
-    await developNote({ workspace, slug: 'needs-review' });
-
-    await expect(
-      promoteDraft({ workspace, slug: 'needs-review' }),
-    ).rejects.toThrow('stops for explicit human approval');
-
-    await writeFile(
-      path.join(workspace, 'drafts', 'needs-review', 'article.md'),
-      `---\nid: 6a4de3e2-126e-4bd7-a6ba-cd458e2a84ad\ntitle: Needs review\ndescription: A complete Draft ready for promotion.\npublishedAt: 2026-07-31\ntags:\n  - writing\n---\n\nA complete Draft.\n`,
-      'utf8',
-    );
-
-    await promoteDraft({
-      workspace,
-      slug: 'needs-review',
-      approvedBy: 'Paolo Cargnin',
-    });
-    await validateWorkspace(workspace);
-  });
-
-  it('will not publish without approval or review evidence and copies only a ready Post', async () => {
-    const { directory, workspace } = await createWorkspace();
-    const slug = 'ready-to-publish';
-    const candidateDirectory = path.join(
-      workspace,
-      'publication-candidates',
-      slug,
-    );
-    await mkdir(candidateDirectory, { recursive: true });
-    await writeFile(
-      path.join(candidateDirectory, 'article.md'),
-      `---\nid: 6a4de3e2-126e-4bd7-a6ba-cd458e2a84ad\ntitle: Ready to publish\ndescription: A complete candidate ready for a human-approved publication PR.\npublishedAt: 2026-07-31\ntags:\n  - writing\n---\n\nA complete candidate.\n`,
-      'utf8',
-    );
-    const postsDirectory = path.join(directory, 'posts');
-    await mkdir(postsDirectory, { recursive: true });
-    await writeFile(path.join(postsDirectory, '.gitkeep'), '', 'utf8');
-
-    await expect(
-      publishCandidate({ workspace, postsDirectory, slug }),
-    ).rejects.toThrow('stops for explicit human approval');
-
-    await expect(
-      publishCandidate({
-        workspace,
-        postsDirectory,
-        slug,
-        approvedBy: 'Paolo Cargnin',
-      }),
-    ).rejects.toThrow('Editorial publication gates failed');
-
-    const digest = await writeCompleteCandidateEvidence({
-      workspace,
-      candidateDirectory,
-      slug,
-      includeSources: false,
+  it('publishes a complete Bozza once, dated, and files it under pubblicati', async () => {
+    const { workspace, postsDirectory } = await project();
+    await createNote({ workspace, slug: 'il-faro' });
+    await developNote({ workspace, slug: 'il-faro' });
+    await writeDraftText(workspace, 'il-faro', {
+      title: 'Il faro',
+      description: 'Una luce che aspetta una nave.',
+      tags: ['memoria'],
     });
 
-    await expect(
-      publishCandidate({
-        workspace,
-        postsDirectory,
-        slug,
-        approvedBy: 'Paolo Cargnin',
-        approvedDigest: 'not-the-reviewed-digest',
-      }),
-    ).rejects.toThrow('Human approval must name the exact candidate digest');
-
-    const postFile = await publishCandidate({
+    const postFile = await publishDraft({
       workspace,
       postsDirectory,
-      slug,
+      slug: 'il-faro',
       approvedBy: 'Paolo Cargnin',
-      approvedDigest: digest,
     });
-    expect(await readFile(postFile, 'utf8')).toContain('Ready to publish');
-    const approval = await readFile(
-      path.join(candidateDirectory, 'publication-check.md'),
-      'utf8',
-    );
-    expect(approval).toContain('approvedBy: Paolo Cargnin');
-    expect(approval).toContain(`approvedDigest: ${digest}`);
-  });
 
-  it('rejects stale review evidence and approval after the candidate changes', async () => {
-    const { directory, workspace } = await createWorkspace();
-    const slug = 'stale-candidate';
-    const candidateDirectory = path.join(
-      workspace,
-      'publication-candidates',
-      slug,
+    const { data } = parseMarkdownDocument(
+      await readFile(postFile, 'utf8'),
+      postFile,
     );
-    await mkdir(candidateDirectory, { recursive: true });
-    const articleFile = path.join(candidateDirectory, 'article.md');
-    await writeFile(
-      articleFile,
-      `---\nid: 6a4de3e2-126e-4bd7-a6ba-cd458e2a84ad\ntitle: Stale candidate\ndescription: A complete candidate whose evidence becomes stale.\npublishedAt: 2026-07-31\ntags:\n  - writing\n---\n\nThe reviewed wording.\n`,
-      'utf8',
-    );
-    const approvedDigest = await writeCompleteCandidateEvidence({
-      workspace,
-      candidateDirectory,
-      slug,
-      includeSources: false,
-    });
-    await writeFile(
-      articleFile,
-      (await readFile(articleFile, 'utf8')).replace(
-        'The reviewed wording.',
-        'Wording changed after review.',
-      ),
-      'utf8',
-    );
-    const postsDirectory = path.join(directory, 'posts');
-
+    expect(data.publishedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(data.lang).toBeUndefined();
     await expect(
-      editorialStatus({ workspace, postsDirectory, slug }),
-    ).resolves.toMatchObject({ nextSkill: 'blog-fact-check' });
+      readFile(path.join(workspace, 'pubblicati', 'il-faro', 'testo.md')),
+    ).resolves.toBeDefined();
     await expect(
-      publishCandidate({
+      publishDraft({
         workspace,
         postsDirectory,
-        slug,
+        slug: 'il-faro',
         approvedBy: 'Paolo Cargnin',
-        approvedDigest,
       }),
-    ).rejects.toMatchObject({
-      errors: expect.arrayContaining([
-        expect.stringContaining(
-          'candidateDigest does not match the current article and source ledger',
-        ),
-      ]),
-    });
+    ).rejects.toThrow('non esiste');
+  });
+
+  it('refuses an incomplete Bozza and leaves nothing public behind', async () => {
+    const { workspace, postsDirectory } = await project();
+    await createNote({ workspace, slug: 'il-faro' });
+    await developNote({ workspace, slug: 'il-faro' });
+
     await expect(
-      readFile(path.join(postsDirectory, `${slug}.md`), 'utf8'),
+      publishDraft({
+        workspace,
+        postsDirectory,
+        slug: 'il-faro',
+        approvedBy: 'Paolo Cargnin',
+      }),
+    ).rejects.toThrow('title deve essere un testo non vuoto');
+    await expect(
+      readFile(path.join(postsDirectory, 'il-faro.md')),
     ).rejects.toThrow();
+  });
+
+  it('signs a Translation only when it follows the current version', async () => {
+    const { postsDirectory } = await project();
+    await writeFile(
+      path.join(postsDirectory, 'il-faro.md'),
+      '---\nid: 6a4de3e2-126e-4bd7-a6ba-cd458e2a84ad\ntitle: Il faro\ndescription: Una luce.\npublishedAt: 2026-07-31\nrevisedAt: 2026-09-01\n---\n\nTesto.\n',
+    );
+    const translations = path.join(
+      path.dirname(postsDirectory),
+      'translations',
+      'en',
+    );
+    await mkdir(translations, { recursive: true });
+    const translation = path.join(translations, 'il-faro.md');
+    await writeFile(
+      translation,
+      '---\ntitle: The lighthouse\ndescription: A light.\nbasedOn: 2026-07-31\n---\n\nText.\n',
+    );
+
+    await expect(
+      signTranslation({
+        postsDirectory,
+        slug: 'il-faro',
+        lang: 'en',
+        signedBy: 'Paolo Cargnin',
+      }),
+    ).rejects.toThrow('Aggiornala prima di firmarla');
+
+    await writeFile(
+      translation,
+      '---\ntitle: The lighthouse\ndescription: A light.\nbasedOn: 2026-09-01\n---\n\nText.\n',
+    );
+    await signTranslation({
+      postsDirectory,
+      slug: 'il-faro',
+      lang: 'en',
+      signedBy: 'Paolo Cargnin',
+      signedAt: '2026-09-02',
+    });
+    const { data } = parseMarkdownDocument(
+      await readFile(translation, 'utf8'),
+      translation,
+    );
+    expect(data).toMatchObject({
+      signedBy: 'Paolo Cargnin',
+      signedAt: '2026-09-02',
+    });
+  });
+
+  it('reads CLI options after the pnpm separator', () => {
+    expect(
+      optionsFromArguments([
+        '--',
+        '--slug',
+        'il-faro',
+        '--approved-by',
+        'Paolo',
+      ]),
+    ).toEqual(
+      new Map([
+        ['--slug', 'il-faro'],
+        ['--approved-by', 'Paolo'],
+      ]),
+    );
   });
 });

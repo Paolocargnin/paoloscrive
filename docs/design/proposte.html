@@ -1,0 +1,377 @@
+<title>Proposte per Paolo scrive</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600;800&family=Literata:ital,opsz,wght@0,7..72,300..800;1,7..72,300..800&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  /* Layout: a quiet presentation sheet that frames three fixed-colour specimens of the blog, one per direction, then a comparison and a recommendation. */
+  :root {
+    --bg: #f6f5f2;
+    --surface: #ffffff;
+    --fg: #22211f;
+    --muted: #67645d;
+    --line: #dcd9d2;
+    --focus: #2140a8;
+    --chip: #ecebe6;
+    --font-text: 'Literata', Georgia, 'Times New Roman', serif;
+    --font-ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #191918; --surface: #222220; --fg: #ecebe6; --muted: #a9a69e; --line: #3b3a37; --focus: #8ea6ff; --chip: #2d2c29;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #191918; --surface: #222220; --fg: #ecebe6; --muted: #a9a69e; --line: #3b3a37; --focus: #8ea6ff; --chip: #2d2c29;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-ui);
+    font-size: 16px;
+    line-height: 1.55;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 4rem;
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+  .wrap { max-width: 72rem; margin-inline: auto; }
+  .intro { max-width: 46rem; padding-block: 3.5rem 2rem; }
+  .eyebrow { margin: 0 0 .75rem; color: var(--muted); font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { margin: 0; font-family: var(--font-text); font-size: clamp(2.1rem, 1.4rem + 3vw, 3.4rem); font-weight: 650; line-height: 1.05; letter-spacing: -.02em; text-wrap: balance; }
+  .intro p.lede { margin: 1.25rem 0 0; font-family: var(--font-text); font-size: 1.15rem; line-height: 1.6; }
+  .sources { display: grid; gap: .6rem; margin: 1.75rem 0 0; padding: 0; list-style: none; }
+  .sources li { display: grid; grid-template-columns: 7.5rem 1fr; gap: 1rem; padding-top: .6rem; border-top: 1px solid var(--line); font-size: .92rem; }
+  .sources b { font-weight: 600; }
+  .sources span { color: var(--muted); }
+
+  .jump { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; flex-wrap: wrap; gap: .5rem; padding-block: .75rem; background: var(--bg); border-bottom: 1px solid var(--line); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .jump a { padding: .35rem .8rem; border-radius: 999px; background: var(--chip); font-size: .85rem; font-weight: 600; text-decoration: none; }
+  .jump a:hover { background: var(--line); }
+
+  .direction { padding-block: 3.5rem 1rem; scroll-margin-top: 4rem; }
+  .direction-head { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 2rem; align-items: end; margin-bottom: 1.5rem; }
+  .direction-head h2 { margin: 0; font-family: var(--font-text); font-size: clamp(1.8rem, 1.3rem + 2vw, 2.6rem); line-height: 1.05; letter-spacing: -.015em; text-wrap: balance; }
+  .direction-head h2 small { display: block; margin-top: .4rem; color: var(--muted); font-size: .5em; font-style: italic; font-weight: 400; letter-spacing: 0; }
+  .direction-head p { margin: 0; font-family: var(--font-text); font-size: 1.02rem; }
+
+  .specimen { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+  .screen { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .screen-bar { display: flex; align-items: center; gap: .4rem; padding: .5rem .75rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .72rem; font-family: var(--font-ui); }
+  .screen-bar i { width: .55rem; height: .55rem; border-radius: 50%; background: var(--line); }
+  .screen-bar span { margin-left: .5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; margin-top: 1.25rem; }
+  .notes h3 { margin: 0 0 .5rem; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .notes p, .notes ul { margin: 0; font-size: .92rem; }
+  .notes ul { padding-left: 1.1rem; }
+  .swatches { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+  .swatches span { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-family: ui-monospace, 'JetBrains Mono', monospace; color: var(--muted); }
+  .swatches span::before { content: ""; width: 1.1rem; height: 1.1rem; border-radius: 3px; border: 1px solid var(--line); background: var(--c); }
+
+  /* ——— A · Taccuino ——— */
+  .ta { --paper: #f0ebdd; --ink: #1c1b18; --faded: #5f5a4e; --rule: #cdc4ae; --blue: #2341a6;
+    background: var(--paper); color: var(--ink); font-family: 'Literata', Georgia, serif; padding: 1.4rem 1.5rem 2rem; min-height: 100%; }
+  .ta-hatch { height: 9px; margin: .9rem 0 0; background: repeating-linear-gradient(-45deg, var(--ink) 0 1px, transparent 1px 5px); }
+  .ta-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .5rem 1rem; }
+  .ta-brand { font-family: 'Bodoni Moda', 'Didot', serif; font-style: italic; font-weight: 700; font-size: 1.55rem; letter-spacing: -.01em; }
+  .ta-nav { display: flex; flex-wrap: wrap; gap: .9rem; font-size: .72rem; font-variant: small-caps; letter-spacing: .08em; font-weight: 600; text-transform: lowercase; }
+  .ta-hero { margin: 1.8rem 0 1.4rem; font-family: 'Bodoni Moda', serif; font-weight: 800; font-size: clamp(2rem, 1.3rem + 2.6vw, 3rem); line-height: .95; letter-spacing: -.025em; text-wrap: balance; }
+  .ta-hero em { font-weight: 500; }
+  .ta-label { margin: 0 0 .4rem; font-size: .7rem; font-variant: small-caps; letter-spacing: .1em; text-transform: lowercase; color: var(--faded); font-weight: 600; }
+  .ta-index { margin: 0; padding: 0; list-style: none; }
+  .ta-index li { display: flex; align-items: baseline; gap: .4rem; padding: .45rem 0; font-size: 1rem; }
+  .ta-index li::after { content: ""; order: 2; flex: 1; border-bottom: 1.5px dotted var(--faded); transform: translateY(-.25em); }
+  .ta-index b { order: 1; font-weight: 600; }
+  .ta-index em { order: 1; color: var(--faded); font-size: .85rem; }
+  .ta-index span { order: 3; font-family: 'Bodoni Moda', serif; font-weight: 700; font-variant-numeric: lining-nums tabular-nums; }
+  .ta-art-meta { margin: 0 0 .6rem; font-size: .7rem; font-variant: small-caps; letter-spacing: .1em; text-transform: lowercase; color: var(--faded); font-weight: 600; }
+  .ta-art h4 { margin: 0; font-family: 'Bodoni Moda', serif; font-weight: 800; font-size: clamp(1.9rem, 1.3rem + 2.2vw, 2.7rem); line-height: .95; letter-spacing: -.025em; }
+  .ta-deck { margin: .7rem 0 1.2rem; font-style: italic; color: var(--faded); font-size: 1rem; }
+  .ta-body p { margin: 0 0 .9em; font-size: .98rem; line-height: 1.7; }
+  .ta-body p.first::first-letter { float: left; margin: .05em .12em 0 0; padding: 0 .08em; font-family: 'Bodoni Moda', serif; font-weight: 800; font-size: 3.6em; line-height: .8; background: repeating-linear-gradient(-45deg, var(--rule) 0 1px, transparent 1px 4px); }
+  .ta-nested { margin: 1.1em 0; padding: .2em 0 .2em 1em; border-left: 2px solid var(--blue); color: var(--blue); font-style: italic; }
+  .ta-nested p { margin: 0; }
+  .ta-break { margin: 1.2em auto; width: 3.2rem; height: 7px; background: repeating-linear-gradient(-45deg, var(--ink) 0 1px, transparent 1px 4px); }
+
+  /* ——— B · Fermo posta ——— */
+  .fp { --kraft: #dccaa3; --sheet: #fbf7ec; --ribbon: #24262c; --stamp: #b3261e; --air: #1d4f91; --pale: #6d6656;
+    background: var(--kraft); color: var(--ribbon); font-family: 'Courier Prime', 'Courier New', monospace; padding: 1.2rem; min-height: 100%; }
+  .fp-sheet { position: relative; background: var(--sheet); padding: 1.3rem 1.3rem 1.6rem; border: 10px solid transparent;
+    border-image: repeating-linear-gradient(-45deg, var(--stamp) 0 10px, var(--sheet) 10px 20px, var(--air) 20px 30px, var(--sheet) 30px 40px) 10; }
+  .fp-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .6rem; }
+  .fp-brand { font-weight: 700; font-size: 1.15rem; letter-spacing: .12em; text-transform: uppercase; }
+  .fp-mark { padding: .15rem .5rem; border: 2px solid var(--stamp); color: var(--stamp); font-weight: 700; font-size: .68rem; letter-spacing: .14em; transform: rotate(-4deg); }
+  .fp-nav { display: flex; flex-wrap: wrap; gap: .9rem; margin-top: .6rem; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
+  .fp-nav a { text-decoration: underline; text-underline-offset: .2em; }
+  .fp-hero { margin: 1.4rem 0 1.2rem; font-size: 1.45rem; font-weight: 700; line-height: 1.2; text-transform: uppercase; letter-spacing: .02em; }
+  .fp-list { display: grid; gap: .7rem; margin: 0; padding: 0; list-style: none; }
+  .fp-list li { display: grid; grid-template-columns: 3.2rem 1fr; gap: .8rem; align-items: center; padding-bottom: .7rem; border-bottom: 1px dashed var(--pale); }
+  .fp-stamp { display: grid; place-items: center; aspect-ratio: .82; max-width: 100%; background: var(--air); color: var(--sheet); font-weight: 700; font-size: .8rem; line-height: 1.05; text-align: center;
+    -webkit-mask: radial-gradient(circle at 3px 3px, transparent 2px, #000 2.5px) -3px -3px / 6px 6px; mask: radial-gradient(circle at 3px 3px, transparent 2px, #000 2.5px) -3px -3px / 6px 6px; }
+  .fp-stamp.red { background: var(--stamp); }
+  .fp-list b { display: block; font-size: .98rem; }
+  .fp-list small { color: var(--pale); font-size: .78rem; }
+  .fp-art { position: relative; }
+  .fp-art-meta { margin: 0 0 .5rem; color: var(--pale); font-size: .78rem; }
+  .fp-art h4 { margin: 0; font-size: 1.4rem; font-weight: 700; text-transform: uppercase; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .25em; line-height: 1.25; padding-right: 5.5rem; }
+  .fp-postmark { position: absolute; top: -.3rem; right: 0; display: grid; place-items: center; width: 5rem; aspect-ratio: 1; border: 2px solid var(--stamp); border-radius: 50%; color: var(--stamp); font-size: .58rem; font-weight: 700; line-height: 1.2; text-align: center; letter-spacing: .08em; transform: rotate(12deg); opacity: .85; }
+  .fp-body { margin-top: 1.2rem; }
+  .fp-body p { margin: 0 0 1.1em; font-size: .92rem; line-height: 1.85; }
+  .fp-body p.dialogue { padding-left: 1.6rem; text-indent: -1.6rem; }
+  .fp-nested { margin: 1.2em 0; padding: .7em .9em; border: 1px dashed var(--air); color: var(--air); }
+  .fp-nested p { margin: 0; }
+
+  /* ——— C · Bozza ——— */
+  .bz { --white: #fbfaf7; --graphite: #1f1f1e; --grey: #6c6a66; --rule: #dedbd3; --pencil: #c8102e;
+    position: relative; overflow: hidden; background: var(--white); color: var(--graphite); font-family: 'Spectral', Georgia, serif; padding: 1.3rem 1.4rem 5.5rem; min-height: 100%; }
+  .bz-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .4rem 1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--graphite); font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .bz-top b { font-weight: 800; font-size: .85rem; }
+  .bz-top nav { display: flex; flex-wrap: wrap; gap: .9rem; }
+  .bz-hero { margin: 1.5rem 0 1.2rem; font-size: clamp(1.8rem, 1.2rem + 2.3vw, 2.6rem); font-weight: 600; line-height: 1.02; letter-spacing: -.02em; text-wrap: balance; }
+  .bz-hero s { text-decoration-color: var(--pencil); text-decoration-thickness: 2px; color: var(--grey); font-weight: 400; }
+  .bz-hero ins { text-decoration: none; color: var(--pencil); font-style: italic; }
+  .bz-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .72rem; font-variant-numeric: tabular-nums; }
+  .bz-table th { padding: .4rem .3rem; border-bottom: 1px solid var(--graphite); color: var(--grey); font-weight: 600; text-align: left; text-transform: uppercase; letter-spacing: .04em; }
+  .bz-table td { padding: .55rem .3rem; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
+  .bz-table td.t { font-family: 'Spectral', Georgia, serif; font-size: .98rem; font-weight: 600; }
+  .bz-table td.n { color: var(--pencil); font-weight: 800; }
+  .bz-art { display: grid; grid-template-columns: minmax(0, 1fr) 7.5rem; gap: 1rem; }
+  .bz-art-meta { grid-column: 1 / -1; margin: 0; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .68rem; color: var(--grey); text-transform: uppercase; letter-spacing: .04em; }
+  .bz-art h4 { grid-column: 1 / -1; margin: 0; font-size: clamp(1.8rem, 1.2rem + 2vw, 2.5rem); font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+  .bz-body p { margin: 0 0 .9em; font-size: 1rem; line-height: 1.68; }
+  .bz-body mark { background: transparent; color: inherit; text-decoration: underline wavy var(--pencil); text-decoration-thickness: 1px; text-underline-offset: .25em; }
+  .bz-nested { margin: 1em 0; padding-left: 1em; border-left: 1px solid var(--graphite); font-style: italic; }
+  .bz-nested p { margin: 0; }
+  .bz-margin { display: grid; align-content: start; gap: .9rem; padding-top: .2rem; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .64rem; line-height: 1.45; color: var(--pencil); }
+  .bz-margin span { padding-left: .5rem; border-left: 1px solid var(--pencil); }
+  .bz-number { position: absolute; left: .5rem; bottom: -.18em; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 6.5rem; font-weight: 800; line-height: .8; letter-spacing: -.1em; color: transparent; -webkit-text-stroke: 1.5px var(--pencil); pointer-events: none; }
+
+  .compare-wrap { margin-top: 3.5rem; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table.compare { width: 100%; min-width: 40rem; border-collapse: collapse; font-size: .9rem; }
+  table.compare th, table.compare td { padding: .8rem 1rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  table.compare thead th { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  table.compare tbody th { font-weight: 600; white-space: nowrap; }
+  table.compare tr:last-child > * { border-bottom: 0; }
+
+  .verdict { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; margin-top: 3rem; padding-top: 2rem; border-top: 2px solid var(--fg); }
+  .verdict h2 { margin: 0; font-family: var(--font-text); font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.2rem); line-height: 1.1; text-wrap: balance; }
+  .verdict p { margin: 0 0 1rem; font-family: var(--font-text); font-size: 1.02rem; }
+  .verdict ol { margin: 0; padding-left: 1.2rem; font-size: .95rem; }
+  .verdict li + li { margin-top: .5rem; }
+  .fine { margin-top: 2.5rem; color: var(--muted); font-size: .82rem; }
+
+  @media (max-width: 52rem) {
+    .direction-head, .specimen, .notes, .verdict { grid-template-columns: minmax(0, 1fr); }
+    .sources li { grid-template-columns: 1fr; gap: .15rem; }
+  }
+  @media (max-width: 30rem) {
+    .bz-art { grid-template-columns: minmax(0, 1fr); }
+    .bz-margin { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fp-art h4 { padding-right: 0; padding-top: 4.6rem; }
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <p class="eyebrow">Paolo scrive · proposte grafiche</p>
+    <h1>Tre facce per un blog di racconti</h1>
+    <p class="lede">Ognuna parte da qualcosa che hai già fatto. Il sito è già impostato con la prima, ma cambiare direzione costa poco: sono tutte costruite sugli stessi componenti.</p>
+    <ul class="sources">
+      <li><b>Il Taccuino</b><span>In <code>stile.md</code> hai scritto: inchiostro nero su carta color crema, tratteggio, e il colore solo quando c'è una storia dentro la storia.</span></li>
+      <li><b>Imbustai</b><span>Un giallo che si gioca per posta: buste, decreti, ritagli, la cassetta delle lettere del tester.</span></li>
+      <li><b>PC - the blog</b><span>Hai scartato la direzione serif “troppo convenzionale” e scelto l'indice ad alto contrasto con il numero gigante.</span></li>
+      <li><b>Il lavoro</b><span>Quattro anni sul design system: token, coerenza, niente varianti a caso.</span></li>
+    </ul>
+  </header>
+
+  <nav class="jump" aria-label="Vai a una proposta">
+    <a href="#taccuino">A · Taccuino</a>
+    <a href="#fermo-posta">B · Fermo posta</a>
+    <a href="#bozza">C · Bozza</a>
+    <a href="#consiglio">Il mio consiglio</a>
+  </nav>
+
+  <!-- A -->
+  <section class="direction" id="taccuino" aria-labelledby="ta-title">
+    <div class="direction-head">
+      <h2 id="ta-title">A · Taccuino <small>inchiostro, tratteggio, e il colore solo per la storia nella storia</small></h2>
+      <p>La regola visiva del tuo taccuino diventa la regola del sito. Tutto è in inchiostro nero su carta. L'unico colore, un blu da penna a sfera, compare solo dentro i racconti, quando un personaggio racconta un'altra storia. L'archivio è l'indice di un quaderno, con i puntini fino al numero di pagina.</p>
+    </div>
+    <div class="specimen">
+      <div class="screen" aria-label="Esempio di home page, direzione Taccuino">
+        <div class="screen-bar"><i></i><i></i><i></i><span>paoloscrive / home</span></div>
+        <div class="ta">
+          <div class="ta-top"><span class="ta-brand">Paolo scrive</span><span class="ta-nav"><span>Racconti</span><span>Percorso</span><span>Temi</span><span>Chi sono</span></span></div>
+          <div class="ta-hatch"></div>
+          <p class="ta-hero">Racconti, <em>e il percorso per arrivarci.</em></p>
+          <p class="ta-label">Indice dei racconti</p>
+          <ol class="ta-index">
+            <li><b>Chi ha spento il faro</b><span>3</span></li>
+            <li><b>Le chiavi sotto lo zerbino</b><span>2</span></li>
+            <li><b>Una tempesta in salotto</b><span>1</span></li>
+          </ol>
+          <p class="ta-label" style="margin-top:1.3rem">Dal percorso</p>
+          <ol class="ta-index">
+            <li><b>Perché scrivo prima a mano</b><em>novembre</em><span>2</span></li>
+            <li><b>Un memo vocale alle due di notte</b><em>ottobre</em><span>1</span></li>
+          </ol>
+        </div>
+      </div>
+      <div class="screen" aria-label="Esempio di racconto, direzione Taccuino">
+        <div class="screen-bar"><i></i><i></i><i></i><span>paoloscrive / racconti / chi-ha-spento-il-faro</span></div>
+        <div class="ta ta-art">
+          <p class="ta-art-meta">Racconto n. 3 · 12 dicembre 2026 · Memoria</p>
+          <h4>Chi ha spento il faro</h4>
+          <p class="ta-deck">Un nonno, un bambino e una luce che aspetta una nave che non lo sa.</p>
+          <div class="ta-body">
+            <p class="first">La prima cosa che ho imparato sul faro è che non si spegne mai davvero. Si abbassa, come una voce quando entra qualcuno nella stanza.</p>
+            <div class="ta-nested"><p>«C'era una nave che girava in tondo da tre giorni» diceva il nonno, «e il capitano giurava di andare dritto.»</p></div>
+            <p>Avevo nove anni e non sapevo niente, nemmeno che stavo ascoltando una storia dentro un'altra storia.</p>
+            <div class="ta-break" role="presentation"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <div><h3>Colori</h3><p>Monocromo. Il blu non decora: segnala un racconto nel racconto.</p>
+        <div class="swatches"><span style="--c:#f0ebdd">carta</span><span style="--c:#1c1b18">inchiostro</span><span style="--c:#5f5a4e">sbiadito</span><span style="--c:#2341a6">penna blu</span></div></div>
+      <div><h3>Caratteri</h3><p>Bodoni Moda per i titoli, il carattere italiano per eccellenza (Bodoni lavorava a Parma). Literata per il testo, disegnato per leggere a lungo su schermo.</p></div>
+      <div><h3>Perché sì, perché no</h3><ul><li>È la tua regola, scritta da te: c'è spazio per i tuoi disegni a tratteggio.</li><li>Il rischio è il “carino letterario”. Il tratteggio e il Bodoni nero lo tengono lontano.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- B -->
+  <section class="direction" id="fermo-posta" aria-labelledby="fp-title">
+    <div class="direction-head">
+      <h2 id="fp-title">B · Fermo posta <small>ogni racconto è un dattiloscritto spedito per posta</small></h2>
+      <p>Viene da Imbustai. Il sito è una busta di carta kraft con il bordo della posta aerea. Ogni racconto arriva come un dattiloscritto, con il timbro postale per la data e un francobollo per il numero. I dialoghi in macchina da scrivere suonano come un copione, e tu i dialoghi li registri a voce.</p>
+    </div>
+    <div class="specimen">
+      <div class="screen" aria-label="Esempio di home page, direzione Fermo posta">
+        <div class="screen-bar"><i></i><i></i><i></i><span>paoloscrive / home</span></div>
+        <div class="fp">
+          <div class="fp-sheet">
+            <div class="fp-top"><span class="fp-brand">Paolo scrive</span><span class="fp-mark">FERMO POSTA</span></div>
+            <div class="fp-nav"><a>Racconti</a><a>Percorso</a><a>Temi</a><a>Chi sono</a></div>
+            <p class="fp-hero">Racconti, e il percorso per arrivarci.</p>
+            <ul class="fp-list">
+              <li><span class="fp-stamp">N.<br>03</span><span><b>Chi ha spento il faro</b><small>racconto · spedito il 12.12.2026</small></span></li>
+              <li><span class="fp-stamp">N.<br>02</span><span><b>Le chiavi sotto lo zerbino</b><small>racconto · spedito il 28.11.2026</small></span></li>
+              <li><span class="fp-stamp red">P.<br>02</span><span><b>Perché scrivo prima a mano</b><small>percorso · spedito il 20.11.2026</small></span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="screen" aria-label="Esempio di racconto, direzione Fermo posta">
+        <div class="screen-bar"><i></i><i></i><i></i><span>paoloscrive / racconti / chi-ha-spento-il-faro</span></div>
+        <div class="fp">
+          <div class="fp-sheet fp-art">
+            <span class="fp-postmark" aria-hidden="true">PAOLO<br>SCRIVE<br>12 DIC<br>2026</span>
+            <p class="fp-art-meta">RACCONTO N. 03 — MEMORIA</p>
+            <h4>Chi ha spento il faro</h4>
+            <div class="fp-body">
+              <p>La prima cosa che ho imparato sul faro è che non si spegne mai davvero. Si abbassa, come una voce quando entra qualcuno nella stanza.</p>
+              <p class="dialogue">— Lo sai perché gira? — chiese il nonno.</p>
+              <p class="dialogue">— Per farsi vedere.</p>
+              <div class="fp-nested"><p>C'era una nave che girava in tondo da tre giorni, e il capitano giurava di andare dritto.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <div><h3>Colori</h3><p>Kraft, carta da lettere, nastro nero. Rosso timbro e blu posta aerea solo per i segni della posta.</p>
+        <div class="swatches"><span style="--c:#dccaa3">kraft</span><span style="--c:#fbf7ec">foglio</span><span style="--c:#24262c">nastro</span><span style="--c:#b3261e">timbro</span><span style="--c:#1d4f91">aerea</span></div></div>
+      <div><h3>Caratteri</h3><p>Una sola famiglia, Courier Prime, la macchina da scrivere dei copioni. Interlinea larga da manoscritto inviato all'editore.</p></div>
+      <div><h3>Perché sì, perché no</h3><ul><li>È la più riconoscibile e la più giocosa. Funziona bene anche come newsletter (“ricevi i racconti per posta”).</li><li>Il rischio è la stanchezza: un racconto lungo tutto in Courier si legge meno bene.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- C -->
+  <section class="direction" id="bozza" aria-labelledby="bz-title">
+    <div class="direction-head">
+      <h2 id="bz-title">C · Bozza <small>il percorso è visibile: matita rossa a margine, stesure contate</small></h2>
+      <p>La sorella letteraria di PC - the blog. Tiene l'energia dell'indice e il numero gigante, ma su carta bianca, con il testo in serif. A margine compaiono le note della matita rossa: le stesure, le parole tagliate, cosa c'era prima. Mette il percorso creativo dentro ogni racconto, invece di relegarlo a una sezione.</p>
+    </div>
+    <div class="specimen">
+      <div class="screen" aria-label="Esempio di home page, direzione Bozza">
+        <div class="screen-bar"><i></i><i></i><i></i><span>paoloscrive / home</span></div>
+        <div class="bz">
+          <div class="bz-top"><b>Paolo scrive</b><nav><span>Racconti</span><span>Percorso</span><span>Temi</span><span>Chi sono</span></nav></div>
+          <p class="bz-hero"><s>Scrivo racconti.</s> <ins>Racconti, e il percorso per arrivarci.</ins></p>
+          <table class="bz-table">
+            <thead><tr><th>N.</th><th>Titolo</th><th>Stesure</th><th>Parole</th></tr></thead>
+            <tbody>
+              <tr><td class="n">03</td><td class="t">Chi ha spento il faro</td><td>4</td><td>2.140</td></tr>
+              <tr><td class="n">02</td><td class="t">Le chiavi sotto lo zerbino</td><td>2</td><td>1.380</td></tr>
+              <tr><td class="n">01</td><td class="t">Una tempesta in salotto</td><td>6</td><td>3.905</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="screen" aria-label="Esempio di racconto, direzione Bozza">
+        <div class="screen-bar"><i></i><i></i><i></i><span>paoloscrive / racconti / chi-ha-spento-il-faro</span></div>
+        <div class="bz">
+          <div class="bz-art">
+            <p class="bz-art-meta">Racconto 03 · stesura 4 · 12.12.2026</p>
+            <h4>Chi ha spento il faro</h4>
+            <div class="bz-body">
+              <p>La prima cosa che ho imparato sul faro è che non si spegne mai davvero. Si <mark>abbassa</mark>, come una voce quando entra qualcuno nella stanza.</p>
+              <div class="bz-nested"><p>«C'era una nave che girava in tondo da tre giorni» diceva il nonno.</p></div>
+              <p>Avevo nove anni e non sapevo niente.</p>
+            </div>
+            <aside class="bz-margin" aria-label="Note a margine">
+              <span>stesura 1: «si spegne». Troppo definitivo.</span>
+              <span>il nonno arriva alla stesura 3</span>
+            </aside>
+          </div>
+          <div class="bz-number" aria-hidden="true">03</div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <div><h3>Colori</h3><p>Bianco carta, grafite, e la matita rossa del correttore di bozze. Il rosso è sempre una nota di lavoro.</p>
+        <div class="swatches"><span style="--c:#fbfaf7">carta</span><span style="--c:#1f1f1e">grafite</span><span style="--c:#6c6a66">grigio</span><span style="--c:#c8102e">matita</span></div></div>
+      <div><h3>Caratteri</h3><p>Spectral per i racconti, JetBrains Mono per indice, numeri e note: la stessa mono di PC - the blog, così i due siti si riconoscono come fratelli.</p></div>
+      <div><h3>Perché sì, perché no</h3><ul><li>Il percorso creativo diventa visibile in ogni pagina, non solo nel diario.</li><li>Chiede lavoro in più a ogni pubblicazione: le note a margine vanno scritte.</li></ul></div>
+    </div>
+  </section>
+
+  <div class="compare-wrap">
+    <table class="compare">
+      <thead><tr><th scope="col"></th><th scope="col">A · Taccuino</th><th scope="col">B · Fermo posta</th><th scope="col">C · Bozza</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Viene da</th><td>Il tuo <code>stile.md</code></td><td>Imbustai</td><td>PC - the blog</td></tr>
+        <tr><th scope="row">Lettura lunga</th><td>Ottima</td><td>Discreta</td><td>Ottima</td></tr>
+        <tr><th scope="row">Personalità</th><td>Alta, quieta</td><td>Altissima, giocosa</td><td>Alta, da officina</td></tr>
+        <tr><th scope="row">Spazio per i disegni</th><td>Pensata per quelli</td><td>Come francobolli e ritagli</td><td>Poco</td></tr>
+        <tr><th scope="row">Il percorso creativo</th><td>Una sezione con lo stesso stile</td><td>Lettere di un altro colore</td><td>Dentro ogni racconto</td></tr>
+        <tr><th scope="row">Lavoro per post</th><td>Nessuno in più</td><td>Nessuno in più</td><td>Note a margine da scrivere</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <section class="verdict" id="consiglio" aria-labelledby="consiglio-title">
+    <h2 id="consiglio-title">Il mio consiglio: A, con un prestito da C</h2>
+    <div>
+      <p>Il Taccuino è l'unica direzione che segue una regola scritta da te. Regge i racconti lunghi e lascia posto ai tuoi disegni. Il blu riservato alla storia dentro la storia dà al colore un significato, invece di usarlo come decorazione.</p>
+      <p>Da C prenderei soltanto le note a margine, e solo nei post del Percorso. Lì raccontare le stesure ha senso, nei racconti distrarrebbe.</p>
+      <ol>
+        <li>Il sito che ho preparato usa già A. Puoi vederlo con <code>pnpm dev</code>.</li>
+        <li>Se preferisci B o C, dimmelo e cambio i token e i tre componenti che li usano.</li>
+        <li>I testi di queste pagine sono segnaposto scritti da me per la prova, non tuoi.</li>
+      </ol>
+    </div>
+  </section>
+
+  <p class="fine">Proposte preparate il 23 novembre 2026 per il repository paoloscrive. I colori dentro gli esempi sono fissi perché fanno parte della proposta; la cornice segue il tema chiaro o scuro.</p>
+</div>

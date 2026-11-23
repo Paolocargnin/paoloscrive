@@ -3,18 +3,8 @@ import path from 'node:path';
 
 import { parse } from 'yaml';
 
-const suite = Object.freeze([
-  'blog-workflow',
-  'blog-capture',
-  'blog-develop',
-  'blog-report',
-  'blog-promote',
-  'blog-fact-check',
-  'blog-counter-discuss',
-  'blog-package',
-  'blog-publish',
-  'blog-correct',
-]);
+// The writing skills of Paolo scrive (ADR 0023).
+const suite = Object.freeze(['racconti', 'lettura-critica']);
 
 function parseFrontmatter(source, filePath) {
   const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -63,23 +53,16 @@ for (const name of suite) {
   }
 }
 
-const router = await readFile(
-  path.join('.agents', 'skills', 'blog-workflow', 'SKILL.md'),
-  'utf8',
-);
-const documentation = await readFile('docs/editorial-skills.md', 'utf8');
-for (const name of suite.slice(1)) {
-  if (!router.includes(`$${name}`)) {
-    errors.push(`blog-workflow: router must point to $${name}.`);
-  }
+const documentation = await readFile('docs/workspace.md', 'utf8');
+for (const name of suite) {
   if (!documentation.includes(`$${name}`)) {
-    errors.push(`docs/editorial-skills.md: must document $${name}.`);
+    errors.push(`docs/workspace.md: must document $${name}.`);
   }
 }
 
 if (errors.length > 0) {
   throw new Error(
-    `Editorial skill validation failed:\n${errors.map((error) => `- ${error}`).join('\n')}`,
+    `Skill validation failed:\n${errors.map((error) => `- ${error}`).join('\n')}`,
   );
 }
-console.log(`Validated ${suite.length} editorial skills.`);
+console.log(`Validated ${suite.length} writing skills.`);

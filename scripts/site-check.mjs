@@ -1,8 +1,11 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
+import { contentContract } from '../src/content/contract.mjs';
+
 const outputDirectory = path.resolve('dist');
 const postsDirectory = path.resolve('src/content/posts');
+const translationsDirectory = path.resolve('src/content/translations');
 
 async function filesIn(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -48,42 +51,61 @@ if (htmlFiles.length === 0) {
   );
 }
 
-const publicPostSlugs = (await readdir(postsDirectory, { withFileTypes: true }))
-  .filter((entry) => entry.isFile() && path.extname(entry.name) === '.md')
-  .map((entry) => path.basename(entry.name, '.md'))
-  .sort();
-const builtPostSlugs = (
-  await readdir(path.join(outputDirectory, 'posts'), { withFileTypes: true })
-)
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => entry.name)
-  .sort();
-const missingPostRoutes = publicPostSlugs.filter(
-  (slug) => !builtPostSlugs.includes(slug),
+// Every Racconto is built at /racconti/<slug>/ and every Translation at
+// /racconti/<slug>/<lang>/ (ADR 0022). Built routes must match the sources
+// exactly, in both directions.
+const markdownNames = async (directory) => {
+  try {
+    return (await readdir(directory, { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && path.extname(entry.name) === '.md')
+      .map((entry) => path.basename(entry.name, '.md'));
+  } catch {
+    return [];
+  }
+};
+
+const expectedRoutes = (await markdownNames(postsDirectory)).map(
+  (slug) => slug,
 );
-const unexpectedPostRoutes = builtPostSlugs.filter(
-  (slug) => !publicPostSlugs.includes(slug),
-);
-if (missingPostRoutes.length > 0 || unexpectedPostRoutes.length > 0) {
-  throw new Error(
-    `Site check failed: built Post routes do not match public Post sources (missing: ${missingPostRoutes.join(', ') || 'none'}; unexpected: ${unexpectedPostRoutes.join(', ') || 'none'}).`,
-  );
+for (const lang of Object.keys(contentContract.languages)) {
+  for (const slug of await markdownNames(
+    path.join(translationsDirectory, lang),
+  )) {
+    expectedRoutes.push(`${slug}/${lang}`);
+  }
 }
 
-// ADR 0020: every Italian translation is built at /it/posts/<slug>/.
-const italianDirectory = path.resolve('src/content/translations/it');
-let italianSlugs = [];
-try {
-  italianSlugs = (await readdir(italianDirectory, { withFileTypes: true }))
-    .filter((entry) => entry.isFile() && path.extname(entry.name) === '.md')
-    .map((entry) => path.basename(entry.name, '.md'));
-} catch {
-  italianSlugs = [];
+const raccontiDirectory = path.join(outputDirectory, 'racconti');
+await assertFile(
+  path.join(raccontiDirectory, 'index.html'),
+  'Site check failed: missing Racconti archive',
+);
+const builtRoutes = [];
+for (const entry of await readdir(raccontiDirectory, { withFileTypes: true })) {
+  if (!entry.isDirectory()) {
+    continue;
+  }
+  builtRoutes.push(entry.name);
+  for (const child of await readdir(path.join(raccontiDirectory, entry.name), {
+    withFileTypes: true,
+  })) {
+    if (child.isDirectory()) {
+      builtRoutes.push(`${entry.name}/${child.name}`);
+    }
+  }
 }
-for (const slug of italianSlugs) {
-  await assertFile(
-    outputFileForPathname(`/it/posts/${slug}/`),
-    'Site check failed: missing Italian translation route',
+
+expectedRoutes.sort();
+builtRoutes.sort();
+const missingRoutes = expectedRoutes.filter(
+  (route) => !builtRoutes.includes(route),
+);
+const unexpectedRoutes = builtRoutes.filter(
+  (route) => !expectedRoutes.includes(route),
+);
+if (missingRoutes.length > 0 || unexpectedRoutes.length > 0) {
+  throw new Error(
+    `Site check failed: built Racconto routes do not match their sources (missing: ${missingRoutes.join(', ') || 'none'}; unexpected: ${unexpectedRoutes.join(', ') || 'none'}).`,
   );
 }
 
@@ -143,9 +165,9 @@ const sitemap = await readFile(
   path.join(outputDirectory, 'sitemap-0.xml'),
   'utf8',
 );
-if (!sitemap.includes('<urlset') || !sitemap.includes('/editorial/')) {
+if (!sitemap.includes('<urlset') || !sitemap.includes('/come-scrivo/')) {
   throw new Error(
-    'Site check failed: sitemap does not include the public Editorial page.',
+    'Site check failed: sitemap does not include the public Come scrivo page.',
   );
 }
 

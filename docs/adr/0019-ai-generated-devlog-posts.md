@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded by ADR 0021
 ---
 
 # Publish AI-generated project updates behind a visible notice

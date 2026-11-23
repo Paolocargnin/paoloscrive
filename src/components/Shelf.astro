@@ -1,0 +1,412 @@
+---
+/**
+ * The home of the Collana: one spine per Racconto, as thick as the story is
+ * long, titles read bottom to top as on Italian books. Below the shelf, the
+ * card of the volume under the pointer or the focus (the latest by default).
+ * On a phone the books lie in a pile, the first at the bottom.
+ */
+import {
+  incipit,
+  ordinalWord,
+  readingTime,
+  spineColor,
+  spineHeight,
+  spineWidth,
+  toRoman,
+  wordCount,
+  writtenParts,
+} from '../lib/collana';
+import { postNumber, postUrl, type Post } from '../lib/posts';
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+const pileWidths = ['92%', '97%', '88%', '95%', '90%', '93%'];
+const pileOffsets = ['4%', '0%', '9%', '2%', '6%', '1%'];
+const volumes = posts
+  .map((post) => {
+    const number = postNumber(post, posts);
+    const words = wordCount(post.body ?? '');
+    return {
+      post,
+      number,
+      words,
+      roman: toRoman(number),
+      color: spineColor(number),
+      reading: readingTime(words),
+      year: writtenParts(post.data.writtenAt, post.data.publishedAt).year,
+      incipit: incipit(post.body ?? ''),
+    };
+  })
+  .sort((left, right) => left.number - right.number);
+const latest = volumes.at(-1);
+const next = toRoman(volumes.length + 1);
+---
+
+<div class="shelf-wrap">
+  <ol class="shelf" aria-label="I volumi della collana, dal primo">
+    {
+      volumes.map((volume, index) => (
+        <li>
+          <a
+            class="spine"
+            href={postUrl(volume.post)}
+            data-volume={volume.number}
+            aria-current={volume === latest ? 'true' : undefined}
+            lang={volume.post.data.lang === 'it' ? undefined : volume.post.data.lang}
+            style={`--c:${volume.color.background};--on:${volume.color.ink};--w:${spineWidth(volume.words)}px;--h:${spineHeight(volume.number)}px;--pw:${pileWidths[index % 6]};--ph:${Math.round(34 + Math.min(volume.words, 2000) / 40)}px;--off:${pileOffsets[index % 6]}`}
+          >
+            <span class="numeral">{volume.roman}</span>
+            <span class="spine-title">{volume.post.data.title}</span>
+            <span class="spine-mark" aria-hidden="true">ps</span>
+            <span class="visually-hidden" lang="it">, volume {ordinalWord(volume.number)}, si legge in {volume.reading}</span>
+          </a>
+        </li>
+      ))
+    }
+    <li class="ghost-item" aria-hidden="true">
+      <span class="ghost">
+        <span class="numeral">{next}</span>
+        <span class="spine-title">in preparazione</span>
+        <span></span>
+      </span>
+    </li>
+    <li class="bookend" aria-hidden="true">
+      <svg viewBox="0 0 46 150"><path d="M6 4 L6 146 L44 146"></path></svg>
+    </li>
+  </ol>
+  <div class="plank" aria-hidden="true"></div>
+  <p class="legend">
+    Lo spessore del dorso è la lunghezza del racconto.<span class="shelf-only"
+      >{' '}I titoli si leggono dal basso, come sui libri italiani.</span
+    >
+  </p>
+</div>
+
+{
+  volumes.map((volume) => (
+    <section
+      class="card"
+      data-card={volume.number}
+      hidden={volume !== latest}
+      aria-label={`Volume ${ordinalWord(volume.number)}`}
+      style={`--c:${volume.color.background}`}
+    >
+      <p class="card-numeral" aria-hidden="true">{volume.roman}</p>
+      <div class="card-body">
+        <p class="kicker small-caps">Volume {ordinalWord(volume.number)} · scritto nel {volume.year}</p>
+        <h3 class="card-title" lang={volume.post.data.lang === 'it' ? undefined : volume.post.data.lang}>{volume.post.data.title}</h3>
+        {volume.incipit && <p class="card-incipit" lang={volume.post.data.lang === 'it' ? undefined : volume.post.data.lang}>«{volume.incipit}»</p>}
+        <p class="kicker small-caps">si legge in {volume.reading}</p>
+        <a class="open small-caps" href={postUrl(volume.post)}>Apri il volume</a>
+      </div>
+    </section>
+  ))
+}
+
+<script>
+  const spines = document.querySelectorAll<HTMLAnchorElement>('.spine');
+  const cards = document.querySelectorAll<HTMLElement>('[data-card]');
+  spines.forEach((spine) => {
+    const show = () => {
+      spines.forEach((other) => {
+        if (other === spine) other.setAttribute('aria-current', 'true');
+        else other.removeAttribute('aria-current');
+      });
+      cards.forEach((card) => {
+        card.hidden = card.dataset.card !== spine.dataset.volume;
+      });
+    };
+    spine.addEventListener('mouseenter', show);
+    spine.addEventListener('focus', show);
+  });
+</script>
+
+<style>
+  .shelf-wrap {
+    margin-top: 1rem;
+  }
+
+  .shelf {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    min-height: 330px;
+    margin: 0;
+    padding: 0 clamp(0.5rem, 3vw, 3rem);
+    list-style: none;
+  }
+
+  .shelf li {
+    display: flex;
+  }
+
+  .spine {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: var(--w);
+    height: var(--h);
+    padding: 0.75rem 0 0.65rem;
+    border-radius: 2px 2px 1px 1px;
+    background: var(--c);
+    box-shadow:
+      inset 3px 0 0 rgba(255, 255, 255, 0.14),
+      inset -4px 0 0 rgba(0, 0, 0, 0.2);
+    color: var(--on);
+    text-decoration: none;
+    transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .spine::before,
+  .spine::after {
+    position: absolute;
+    right: 5px;
+    left: 5px;
+    height: 0;
+    border-top: 1px solid currentColor;
+    content: '';
+    opacity: 0.45;
+  }
+
+  .spine::before {
+    top: 2.35rem;
+  }
+
+  .spine::after {
+    bottom: 2.35rem;
+  }
+
+  .spine:hover,
+  .spine:focus-visible,
+  .spine[aria-current='true'] {
+    transform: translateY(-14px);
+  }
+
+  .spine:focus-visible {
+    outline-color: var(--ink);
+  }
+
+  .numeral {
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .spine-title {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0.2rem 0;
+    font-family: var(--display);
+    font-size: 1rem;
+    font-style: italic;
+    line-height: 1.08;
+    text-align: center;
+    transform: rotate(180deg);
+    writing-mode: vertical-rl;
+  }
+
+  .spine-mark {
+    display: grid;
+    width: 1.45rem;
+    height: 1.45rem;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-family: var(--display);
+    font-size: 0.8rem;
+    font-style: italic;
+    opacity: 0.85;
+  }
+
+  .ghost {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    width: 46px;
+    height: 270px;
+    padding: 0.75rem 0;
+    border: 1.5px dashed var(--rule);
+    border-radius: 2px;
+    color: var(--soft);
+  }
+
+  .ghost .spine-title {
+    font-size: 0.9rem;
+  }
+
+  .bookend svg {
+    width: 46px;
+    height: 150px;
+  }
+
+  .bookend path {
+    fill: none;
+    stroke: var(--ink);
+    stroke-linejoin: round;
+    stroke-width: 6;
+  }
+
+  .plank {
+    height: 10px;
+    margin: 0 clamp(0rem, 1vw, 1rem);
+    border-radius: 1px;
+    background: var(--ink);
+    box-shadow: 0 10px 18px -12px var(--shadow);
+  }
+
+  .legend {
+    max-width: 36rem;
+    margin: 0.9rem auto 0;
+    color: var(--soft);
+    font-size: 1.02rem;
+    font-style: italic;
+    text-align: center;
+  }
+
+  .card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 2rem;
+    align-items: start;
+    max-width: 46rem;
+    margin: 3rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 6px solid var(--c);
+  }
+
+  .card[hidden] {
+    display: none;
+  }
+
+  .card-numeral {
+    min-width: 1.4em;
+    margin: 0;
+    font-family: var(--display);
+    font-size: clamp(3.6rem, 9vw, 5.4rem);
+    line-height: 0.85;
+  }
+
+  .card-body {
+    min-width: 0;
+  }
+
+  .kicker {
+    margin: 0;
+    color: var(--soft);
+    font-size: 1.05rem;
+  }
+
+  .card-title {
+    margin: 0.3rem 0 0;
+    font-family: var(--display);
+    font-size: clamp(1.7rem, 4vw, 2.3rem);
+    font-style: italic;
+    font-weight: 500;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  .card-incipit {
+    margin: 0.8rem 0 0.7rem;
+    font-size: 1.2rem;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .open {
+    display: inline-block;
+    margin-top: 1rem;
+    border-bottom: 1px solid currentColor;
+    font-size: 1.1rem;
+    text-decoration: none;
+  }
+
+  @media (max-width: 640px) {
+    .shelf {
+      flex-direction: column-reverse;
+      align-items: stretch;
+      gap: 3px;
+      min-height: 0;
+      padding: 0;
+    }
+
+    .shelf li {
+      display: block;
+    }
+
+    .spine {
+      flex-direction: row;
+      gap: 0.8rem;
+      width: var(--pw);
+      height: var(--ph);
+      margin-left: var(--off);
+      padding: 0 0.8rem;
+    }
+
+    .spine::before,
+    .spine::after {
+      top: 4px;
+      right: auto;
+      bottom: 4px;
+      left: auto;
+      width: 0;
+      height: auto;
+      border-top: 0;
+      border-left: 1px solid currentColor;
+    }
+
+    .spine::before {
+      left: 2.5rem;
+    }
+
+    .spine::after {
+      right: 2.6rem;
+    }
+
+    .spine:hover,
+    .spine:focus-visible,
+    .spine[aria-current='true'] {
+      transform: translateX(10px);
+    }
+
+    .spine-title {
+      overflow: hidden;
+      padding: 0 0.4rem;
+      font-size: 1.02rem;
+      text-align: left;
+      text-overflow: ellipsis;
+      transform: none;
+      white-space: nowrap;
+      writing-mode: horizontal-tb;
+    }
+
+    .numeral {
+      width: 1.6rem;
+      text-align: center;
+    }
+
+    .shelf .ghost-item,
+    .shelf .bookend,
+    .shelf-only {
+      display: none;
+    }
+
+    .plank {
+      margin: 0;
+    }
+
+    .card {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

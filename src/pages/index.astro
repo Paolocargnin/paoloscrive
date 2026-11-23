@@ -1,63 +1,36 @@
 ---
 import { getCollection } from 'astro:content';
 
-import PostIndex from '../components/PostIndex.astro';
+import Shelf from '../components/Shelf.astro';
 import PageLayout from '../layouts/PageLayout.astro';
-import { sortPostsNewestFirst } from '../lib/posts';
 import { siteDescription, siteName } from '../lib/site';
 
-const allPosts = await getCollection('posts');
-const posts = sortPostsNewestFirst(allPosts);
+const posts = await getCollection('posts');
 ---
 
 <PageLayout title={siteName} description={siteDescription}>
-  <section class="hero" aria-labelledby="hero-title">
-    <h1 id="hero-title">Racconti, <em>nella lingua in cui sono nati.</em></h1>
+  <section class="intro" aria-labelledby="intro-title">
+    <h1 id="intro-title" class="visually-hidden">{siteName}: la collana</h1>
     <p>
-      Storie inventate, in italiano o in inglese. Nascono da un taccuino, da un memo vocale, da un
-      dialogo sentito a metà.
+      Racconti numerati come i volumi di una collana tascabile, in italiano o in inglese, nella
+      lingua in cui sono nati.
     </p>
   </section>
-
-  <section class="section" aria-labelledby="racconti-title">
-    <h2 class="section-title" id="racconti-title">
-      Indice dei racconti <a href="/racconti/">Tutti</a>
-    </h2>
-    {
-      posts.length > 0 ? (
-        <PostIndex posts={posts} allPosts={allPosts} label="Racconti, dal più recente" />
-      ) : (
-        <p class="empty">Il primo racconto è ancora sul taccuino.</p>
-      )
-    }
-  </section>
+  {
+    posts.length > 0 ? (
+      <Shelf posts={posts} />
+    ) : (
+      <p class="empty">Lo scaffale è vuoto: il primo volume è ancora in preparazione.</p>
+    )
+  }
 </PageLayout>
 
 <style>
-  .hero {
-    max-width: 52rem;
-    margin-bottom: clamp(3.5rem, 9vw, 6rem);
-  }
-
-  h1 {
-    margin: 0;
-    font-family: var(--display);
-    font-size: clamp(3rem, 1.5rem + 6.5vw, 6.4rem);
-    font-weight: 800;
-    letter-spacing: -0.035em;
-    line-height: 0.9;
-    text-wrap: balance;
-  }
-
-  h1 em {
-    font-weight: 500;
-  }
-
-  .hero p {
+  .intro p {
     max-width: 34rem;
-    margin: 1.6rem 0 0;
-    color: var(--faded);
-    font-size: clamp(1.05rem, 1rem + 0.35vw, 1.25rem);
-    line-height: 1.55;
+    margin: 0 0 2.6rem;
+    font-size: 1.3rem;
+    line-height: 1.5;
+    text-wrap: pretty;
   }
 </style>

@@ -8,6 +8,7 @@ import {
   languageCodes,
   slugPattern,
   stableIdPattern,
+  writtenAtPattern,
 } from '../src/content/contract.mjs';
 import {
   isIsoDate,
@@ -111,6 +112,12 @@ function validateRaccontoMetadata(data, filePath, errors) {
         `${filePath}: revisedAt non può precedere la data di pubblicazione.`,
       );
     }
+  }
+
+  if ('writtenAt' in data && !writtenAtPattern.test(String(data.writtenAt))) {
+    errors.push(
+      `${filePath}: writtenAt è un anno, un mese o un giorno (2009, 2009-08 o 2009-08-14).`,
+    );
   }
 
   if ('lang' in data && !languageCodes.includes(data.lang)) {

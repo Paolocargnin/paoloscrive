@@ -24,8 +24,10 @@ Leggi `CONTEXT.md` e `docs/workspace.md`. Prima di toccare il Workspace,
 2. Il testo lo scrive Paolo. Puoi riordinare appunti, proporre una struttura,
    fare domande; non scrivere il racconto al posto suo.
 3. Prima di pubblicare servono `title`, `description` e, se non è italiano,
-   `lang: en`. I `tags` sono facoltativi e vengono dal vocabolario in
-   `src/content/contract.mjs`.
+   `lang: en`. Sono facoltativi i `tags`, dal vocabolario in
+   `src/content/contract.mjs`, e `writtenAt` (`2009`, `2009-08` o
+   `2009-08-14`), la data di scrittura che il colophon mostra al posto di
+   quella di pubblicazione. `description` è l'epigrafe del frontespizio.
 
 ## Pubblicazione
 

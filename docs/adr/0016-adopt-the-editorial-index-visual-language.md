@@ -1,5 +1,5 @@
 ---
-status: "under review — paoloscrive uses the provisional Taccuino direction until Paolo chooses one (docs/design/proposte.html)"
+status: superseded by ADR 0025
 ---
 
 # Adopt the editorial index visual language

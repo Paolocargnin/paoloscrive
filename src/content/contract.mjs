@@ -7,7 +7,8 @@
  * - every Post is a Racconto with an original language (ADR 0021, ADR 0022);
  * - a Translation lives beside it and carries its own Firma (ADR 0022);
  * - the Workspace path is Nota → Bozza → pubblicato (ADR 0023);
- * - a substantive change is a Revisione, shown as "Rivisto il" (ADR 0024).
+ * - a substantive change is a Revisione, shown as "Rivisto il" (ADR 0024);
+ * - writtenAt (a year, month or day) dates the Collana's colophon (ADR 0025).
  */
 export const CONTENT_CONTRACT_VERSION = 3;
 
@@ -55,7 +56,7 @@ export const contentContract = Object.freeze({
       'description',
       'publishedAt',
     ]),
-    optionalMetadata: Object.freeze(['lang', 'tags', 'revisedAt']),
+    optionalMetadata: Object.freeze(['lang', 'tags', 'revisedAt', 'writtenAt']),
     maxTags: 4,
   }),
   translation: Object.freeze({
@@ -74,5 +75,9 @@ export const languageCodes = Object.freeze(
 
 export const stableIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** writtenAt: 2009, 2009-08 or 2009-08-14. */
+export const writtenAtPattern =
+  /^\d{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d|3[01]))?)?$/;
 
 export const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

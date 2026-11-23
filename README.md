@@ -30,7 +30,9 @@ pnpm pubblica -- --slug il-faro --approved-by "Paolo Cargnin"
 ```
 
 Un Racconto è `src/content/posts/<slug>.md`, servito a `/racconti/<slug>/`. Ha
-una lingua originale (`lang`, italiano se manca) e può avere una Traduzione in
+una lingua originale (`lang`, italiano se manca), una data di scrittura
+facoltativa per il colophon (`writtenAt`: `2009`, `2009-08` o `2009-08-14`) e
+può avere una Traduzione in
 `src/content/translations/<lang>/<slug>.md`, servita a `/racconti/<slug>/<lang>/`.
 Una Traduzione fatta dall'IA mostra un avviso finché Paolo non la firma con
 `pnpm firma` (ADR 0022). Una modifica sostanziale dopo la pubblicazione si
@@ -41,10 +43,11 @@ percorso.
 
 ## Grafica
 
-Il sito usa per ora la direzione «Taccuino»: inchiostro su carta, tratteggio,
-Bodoni Moda e Literata, e il blu solo per una storia dentro la storia. Le
-alternative sono in [docs/design/proposte.html](docs/design/proposte.html). La
-scelta definitiva sostituirà l'ADR 0016.
+La grafica è la «Collana» (ADR 0025). Ogni Racconto è un volume tascabile
+numerato: scaffale di dorsi in home, frontespizio con numero romano, testo in
+EB Garamond giustificato con capolettera in Bodoni Moda, colophon in fondo. Le
+proposte scartate sono in [docs/design/proposte.html](docs/design/proposte.html)
+e nell'Artifact della sessione di prototipazione.
 
 ## Pubblicazione e deploy
 

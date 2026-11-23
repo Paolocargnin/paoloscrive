@@ -1,4 +1,7 @@
 ---
+import { getCollection } from 'astro:content';
+
+import { numberWord, writtenParts } from '../lib/collana';
 import { navigation, siteName } from '../lib/site';
 
 interface Props {
@@ -6,6 +9,14 @@ interface Props {
 }
 
 const { currentPath = '/' } = Astro.props;
+const posts = await getCollection('posts');
+const years = posts.map((post) => writtenParts(post.data.writtenAt, post.data.publishedAt).year);
+const first = Math.min(...years);
+const last = Math.max(...years);
+const volumes =
+  posts.length === 0
+    ? 'il primo volume è in preparazione'
+    : `${posts.length === 1 ? 'un volume' : `${numberWord(posts.length)} volumi`}, ${first === last ? `del ${first}` : `dal ${first} al ${last}`}`;
 
 function current(href: string) {
   if (currentPath === href) return 'page';
@@ -13,49 +24,66 @@ function current(href: string) {
 }
 ---
 
-<header class="site-header" id="top">
+<header class="masthead" id="top">
   <div class="bar">
-    <a class="brand" href="/" aria-current={currentPath === '/' ? 'page' : undefined}>{siteName}</a>
-    <nav aria-label="Navigazione principale">
-      {navigation.map(({ href, label }) => <a href={href} aria-current={current(href)}>{label}</a>)}
-    </nav>
+    <a class="brand" href="/" aria-current={currentPath === '/' ? 'page' : undefined}>
+      <span class="mark" aria-hidden="true"><i>ps</i></span>
+      <span class="wordmark">{siteName}</span>
+    </a>
+    <p class="catalogue small-caps">Collana di racconti<br />{volumes}</p>
   </div>
-  <div class="hatch-rule" aria-hidden="true"></div>
+  <nav class="small-caps" aria-label="Navigazione principale">
+    {navigation.map(({ href, label }) => <a href={href} aria-current={current(href)}>{label}</a>)}
+  </nav>
 </header>
 
 <style>
-  .site-header {
+  .masthead {
     max-width: 72rem;
     margin-inline: auto;
-    padding: 1.4rem var(--gutter) 0;
+    padding: 2.5rem var(--gutter-right) 0 var(--gutter-left);
   }
 
   .bar {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: end;
     justify-content: space-between;
-    gap: 0.5rem 1.5rem;
-    padding-bottom: 0.9rem;
+    gap: 1rem 2rem;
   }
 
   .brand {
-    font-family: var(--display);
-    font-size: clamp(1.5rem, 1.2rem + 1vw, 1.9rem);
-    font-style: italic;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
     text-decoration: none;
+  }
+
+  .wordmark {
+    font-family: var(--display);
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-style: italic;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  .catalogue {
+    margin: 0;
+    color: var(--soft);
+    font-size: 1.05rem;
+    line-height: 1.35;
+    text-align: right;
   }
 
   nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem 1.3rem;
-    font-size: 0.95rem;
-    font-variant-caps: all-small-caps;
-    font-weight: 600;
-    letter-spacing: 0.09em;
+    gap: 0.3rem 1.6rem;
+    margin-top: 1.2rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: 1.1rem;
   }
 
   nav a {
@@ -65,7 +93,12 @@ function current(href: string) {
   nav a:hover,
   nav a[aria-current] {
     text-decoration: underline;
-    text-decoration-thickness: 2px;
     text-underline-offset: 0.3em;
+  }
+
+  @media (max-width: 40rem) {
+    .catalogue {
+      text-align: left;
+    }
   }
 </style>

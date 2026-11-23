@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest';
 const read = (path) => readFile(path, 'utf8');
 
 describe('reading surfaces', () => {
-  it('keeps a skip link, reduced motion and the Taccuino typefaces in the layout', async () => {
+  it('keeps a skip link, reduced motion and the Collana typefaces in the layout', async () => {
     const layout = await read('src/layouts/BaseLayout.astro');
 
     expect(layout).toContain('Vai al contenuto');
     expect(layout).toContain('prefers-reduced-motion: reduce');
     expect(layout).toContain("'Bodoni Moda Variable'");
-    expect(layout).toContain("'Literata Variable'");
+    expect(layout).toContain("'EB Garamond Variable'");
     expect(layout).toContain('prefers-color-scheme: dark');
   });
 
@@ -51,7 +51,7 @@ describe('reading surfaces', () => {
       ].map(read),
     );
 
-    expect(pages[0]).toContain('Indice dei racconti');
+    expect(pages[0]).toContain('<Shelf');
     expect(pages[2]).toContain('<PostArticle');
     expect(pages[3]).toContain('translation={translation}');
     expect(pages[4]).toContain('controlledTagIds');
@@ -60,19 +60,24 @@ describe('reading surfaces', () => {
     expect(pages[10]).toContain('Sitemap:');
   });
 
-  it('shows the AI notice on a Translation until it is signed', async () => {
+  it('turns the frontispiece band into the AI notice until a Translation is signed', async () => {
     const article = await read('src/components/PostArticle.astro');
 
     expect(article).toContain(
-      'const unsigned = translation && !isSigned(translation);',
+      'const unsigned = translation !== undefined && !isSigned(translation);',
     );
-    expect(article).toContain('{unsigned && <p class="notice" role="note">');
+    expect(article).toContain(
+      '<p class="band small-caps" role="note">{text.notice}</p>',
+    );
     expect(article).toContain('Rivisto il');
+    expect(article).toContain('Finito di scrivere');
   });
 
-  it('reserves the only colour for a story told inside the story', async () => {
-    const article = await read('src/components/PostArticle.astro');
+  it('draws the home as a shelf of spines with a card for each volume', async () => {
+    const shelf = await read('src/components/Shelf.astro');
 
-    expect(article).toMatch(/blockquote\) \{[\s\S]*?color: var\(--blue\);/);
+    expect(shelf).toContain('writing-mode: vertical-rl');
+    expect(shelf).toContain('in preparazione');
+    expect(shelf).toContain('flex-direction: column-reverse');
   });
 });

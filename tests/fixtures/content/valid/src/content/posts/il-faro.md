@@ -4,6 +4,7 @@ title: Il faro
 description: Un Racconto completo per il contratto pubblico.
 publishedAt: 2026-07-31
 revisedAt: 2026-08-02
+writtenAt: 2009-08
 tags:
   - memoria
   - fantastico

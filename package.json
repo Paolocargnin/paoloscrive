@@ -31,10 +31,11 @@
     "quality": "pnpm format && pnpm type-check && pnpm test && pnpm skills:check && pnpm content:check && pnpm build && pnpm site:check"
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^7.2.2",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "@fontsource-variable/bodoni-moda": "^5.3.0",
-    "@fontsource-variable/literata": "^5.3.0",
+    "@fontsource-variable/eb-garamond": "^5.3.0",
     "astro": "^7.1.6",
     "sharp": "^0.34.5",
     "yaml": "^2.9.0"

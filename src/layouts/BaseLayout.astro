@@ -1,8 +1,8 @@
 ---
 import '@fontsource-variable/bodoni-moda/standard.css';
 import '@fontsource-variable/bodoni-moda/standard-italic.css';
-import '@fontsource-variable/literata/standard.css';
-import '@fontsource-variable/literata/standard-italic.css';
+import '@fontsource-variable/eb-garamond/wght.css';
+import '@fontsource-variable/eb-garamond/wght-italic.css';
 
 import { siteName } from '../lib/site';
 
@@ -108,24 +108,24 @@ const structuredData =
 
 <style is:global>
   /*
-   * Direction A, "Taccuino" (docs/design/proposte.html): black ink on paper
-   * and hatching, as in the notebook's own style guide. The only hue, a
-   * ballpoint blue, is reserved for a story told inside a story.
+   * Direction B, "Collana" (ADR 0025): every Racconto is a volume of a
+   * pocket series. Bodoni Moda for the wordmark, roman numerals, titles and
+   * drop caps; EB Garamond for the text. Colour appears only on the spines
+   * and the band of each volume.
    */
   :root {
     color-scheme: light;
-    --paper: #f0ebdd;
-    --paper-deep: #e6dfcb;
-    --ink: #1c1b18;
-    --faded: #5f5a4e;
-    --rule: #cdc4ae;
-    --blue: #2341a6;
+    --paper: #f3f2ed;
+    --ink: #1b1b18;
+    --soft: #5e5c55;
+    --rule: #cdc9bd;
+    --plate: #ebe9e1;
+    --shadow: rgba(30, 30, 20, 0.2);
     --display: 'Bodoni Moda Variable', 'Bodoni 72', Didot, 'Times New Roman', serif;
-    --text: 'Literata Variable', Georgia, 'Times New Roman', serif;
-    --measure: 36rem;
-    --gutter: max(1rem, env(safe-area-inset-left, 0px));
-    --hatch: repeating-linear-gradient(-45deg, var(--ink) 0 1px, transparent 1px 5px);
-    --hatch-soft: repeating-linear-gradient(-45deg, var(--rule) 0 1px, transparent 1px 4px);
+    --text: 'EB Garamond Variable', Garamond, 'Iowan Old Style', Georgia, serif;
+    --measure: 33rem;
+    --gutter-left: max(1rem, env(safe-area-inset-left, 0px));
+    --gutter-right: max(1rem, env(safe-area-inset-right, 0px));
     background: var(--paper);
     color: var(--ink);
     font-family: var(--text);
@@ -136,12 +136,12 @@ const structuredData =
   @media (prefers-color-scheme: dark) {
     :root {
       color-scheme: dark;
-      --paper: #1a1814;
-      --paper-deep: #24211b;
-      --ink: #ece5d3;
-      --faded: #aaa28f;
-      --rule: #4a4538;
-      --blue: #93a8ff;
+      --paper: #131512;
+      --ink: #ebe7da;
+      --soft: #a9a597;
+      --rule: #353830;
+      --plate: #1c1f1b;
+      --shadow: rgba(0, 0, 0, 0.55);
     }
   }
 
@@ -160,8 +160,8 @@ const structuredData =
     margin: 0;
     background: var(--paper);
     color: var(--ink);
-    font-size: 1rem;
-    line-height: 1.6;
+    font-size: 1.15rem;
+    line-height: 1.55;
     overflow-wrap: anywhere;
   }
 
@@ -172,7 +172,7 @@ const structuredData =
 
   a {
     color: inherit;
-    text-decoration-color: var(--faded);
+    text-decoration-color: var(--soft);
     text-decoration-thickness: 1px;
     text-underline-offset: 0.2em;
   }
@@ -184,7 +184,7 @@ const structuredData =
   a:focus-visible,
   button:focus-visible,
   [tabindex]:focus-visible {
-    outline: 2px solid var(--blue);
+    outline: 2px solid var(--ink);
     outline-offset: 0.25rem;
   }
 
@@ -194,29 +194,45 @@ const structuredData =
     max-width: 100%;
   }
 
-  .label {
-    margin: 0;
-    color: var(--faded);
-    font-size: 0.78rem;
+  .small-caps {
     font-variant-caps: all-small-caps;
-    font-weight: 600;
-    letter-spacing: 0.09em;
+    letter-spacing: 0.1em;
   }
 
-  .hatch-rule {
-    height: 9px;
-    background: var(--hatch);
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .mark {
+    display: grid;
+    flex: none;
+    width: 2.9rem;
+    height: 2.9rem;
+    place-items: center;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    font-family: var(--display);
+    font-size: 1.2rem;
+    font-style: italic;
+  }
+
+  .mark i {
+    transform: translateY(-0.06em);
   }
 
   .skip-link {
     position: fixed;
-    z-index: 10;
+    z-index: 30;
     inset-block-start: 0.75rem;
     inset-inline-start: 0.75rem;
     padding: 0.75rem 1rem;
     background: var(--ink);
     color: var(--paper);
-    font-weight: 700;
     transform: translateY(calc(-100% - 1rem));
   }
 

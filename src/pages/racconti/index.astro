@@ -10,15 +10,15 @@ const allPosts = await getCollection('posts');
 const posts = sortPostsNewestFirst(allPosts);
 ---
 
-<PageLayout title="Racconti" description="Tutti i racconti di Paolo scrive, dal più recente.">
-  <PageHeading label={`${posts.length} ${posts.length === 1 ? 'racconto' : 'racconti'}`} title="Racconti">
-    <p>Storie inventate, brevi e meno brevi. Il numero a destra è l’ordine in cui sono arrivate.</p>
+<PageLayout title="Racconti" description="Il catalogo dei racconti di Paolo scrive, dal più recente.">
+  <PageHeading label={`${posts.length} ${posts.length === 1 ? 'volume' : 'volumi'}`} title="Catalogo della collana">
+    <p>Tutti i racconti, dal più recente. Il numero romano è l’ordine in cui sono entrati nella collana.</p>
   </PageHeading>
   {
     posts.length > 0 ? (
       <PostIndex posts={posts} allPosts={allPosts} label="Racconti, dal più recente" />
     ) : (
-      <p class="empty">Il primo racconto è ancora sul taccuino.</p>
+      <p class="empty">Il primo volume è ancora in preparazione.</p>
     )
   }
 </PageLayout>

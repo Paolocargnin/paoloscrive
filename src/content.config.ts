@@ -7,6 +7,7 @@ import {
   controlledTagIds,
   languageCodes,
   stableIdPattern,
+  writtenAtPattern,
 } from './content/contract.mjs';
 
 const language = z.enum(languageCodes as unknown as [string, ...string[]]);
@@ -22,6 +23,7 @@ const posts = defineCollection({
       description: z.string().trim().min(1),
       publishedAt: z.coerce.date(),
       revisedAt: z.coerce.date().optional(),
+      writtenAt: z.coerce.string().regex(writtenAtPattern).optional(),
       lang: language.default(contentContract.defaultLanguage),
       tags: z
         .array(z.enum(controlledTagIds as unknown as [string, ...string[]]))

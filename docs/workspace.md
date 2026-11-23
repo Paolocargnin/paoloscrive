@@ -42,7 +42,8 @@ pnpm workspace:validate
 
 - `nota` crea `note/<slug>/testo.md`.
 - `bozza` sposta la Nota in `bozze/`, la conserva come `appunti.md` e crea un
-  `testo.md` con un `id` stabile e i metadati vuoti da riempire.
+  `testo.md` con un `id` stabile e i metadati vuoti da riempire. Facoltativo:
+  `writtenAt`, la data di scrittura per il colophon.
 - `pubblica` controlla i metadati, copia `testo.md` in
   `src/content/posts/<slug>.md` con la data di oggi se manca `publishedAt`, non
   sovrascrive mai un Racconto e archivia la cartella in `pubblicati/`. Il

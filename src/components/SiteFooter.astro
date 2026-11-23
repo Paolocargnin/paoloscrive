@@ -3,52 +3,38 @@ import { siteName } from '../lib/site';
 ---
 
 <footer class="site-footer">
-  <div class="hatch-rule" aria-hidden="true"></div>
-  <div class="row">
-    <p><span class="name">{siteName}</span><br />Racconti, e il percorso per arrivarci.</p>
-    <nav aria-label="Altre pagine">
-      <a href="/come-scrivo/">Come scrivo</a>
-      <a href="/rss.xml">Feed RSS</a>
-      <a href="#top">Torna su ↑</a>
-    </nav>
-  </div>
+  <span class="mark" aria-hidden="true"><i>ps</i></span>
+  <p class="small-caps">{siteName} · Collana di racconti</p>
+  <nav class="small-caps" aria-label="Altre pagine">
+    <a href="/come-scrivo/">Come scrivo</a>
+    <a href="/rss.xml">Feed RSS</a>
+    <a href="#top">Torna su</a>
+  </nav>
 </footer>
 
 <style>
   .site-footer {
+    display: grid;
+    justify-items: center;
+    gap: 0.7rem;
     max-width: 72rem;
-    margin-inline: auto;
-    padding: 0 var(--gutter) 2.5rem;
-  }
-
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-    padding-top: 1.2rem;
-    color: var(--faded);
-    font-size: 0.92rem;
+    margin: 0 auto;
+    padding: 2.5rem var(--gutter-right) 3rem var(--gutter-left);
+    border-top: 1px solid var(--rule);
+    color: var(--soft);
+    text-align: center;
   }
 
   p {
     margin: 0;
-  }
-
-  .name {
-    color: var(--ink);
-    font-family: var(--display);
-    font-style: italic;
-    font-weight: 700;
+    font-size: 1.05rem;
   }
 
   nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem 1.2rem;
-    font-variant-caps: all-small-caps;
-    font-weight: 600;
-    letter-spacing: 0.09em;
+    justify-content: center;
+    gap: 0.3rem 1.4rem;
+    font-size: 1.05rem;
   }
 </style>

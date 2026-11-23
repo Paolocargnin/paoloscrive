@@ -7,10 +7,9 @@ import rehypeCapolettera from './src/markdown/rehype-capolettera.mjs';
 
 import { validatePublicContent } from './scripts/content-contract.mjs';
 
-// Set PUBLIC_SITE_URL in the production build environment (docs/deployment.md).
-// The reserved .example domain keeps local and CI builds from ever claiming a
-// real origin by accident.
-const site = process.env.PUBLIC_SITE_URL || 'https://paoloscrive.example';
+// https://paoloscrive.it is the canonical origin (ADR 0021). Production sets
+// PUBLIC_SITE_URL to the same value; see docs/deployment.md.
+const site = process.env.PUBLIC_SITE_URL || 'https://paoloscrive.it';
 
 export default defineConfig({
   site,

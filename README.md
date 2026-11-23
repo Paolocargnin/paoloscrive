@@ -53,5 +53,6 @@ e nell'Artifact della sessione di prototipazione.
 
 `main` è il confine della pubblicazione: ci si arriva solo con una pull request
 che passa il controllo **Quality**, e il merge lo fa Paolo. Il sito è servito
-come asset statici dal Worker Cloudflare `paoloscrive`; prima del primo deploy
-va impostato `PUBLIC_SITE_URL`. Vedi [deploy e ripristino](docs/deployment.md).
+come asset statici dal Worker Cloudflare `paoloscrive` all'origine canonica
+https://paoloscrive.it (`PUBLIC_SITE_URL=https://paoloscrive.it`; `www`
+reindirizza lì). Vedi [deploy e ripristino](docs/deployment.md).

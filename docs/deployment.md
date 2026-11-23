@@ -29,12 +29,20 @@ unavailable, is `pnpm deploy` from the reviewed commit.
 
 ## Production configuration and analytics
 
-Set `PUBLIC_SITE_URL=` to the canonical HTTPS origin (for example the custom
-domain, or the `workers.dev` address until there is one) in the Worker
-production environment before the first deploy. Without it, builds fall back
-to the reserved `https://paoloscrive.example`, which is safe for local and CI
-builds but wrong in production. If the origin changes, replace the value and
-redeploy.
+Set `PUBLIC_SITE_URL=https://paoloscrive.it` in the Worker production
+environment. `paoloscrive.it` is the canonical public origin, and
+`www.paoloscrive.it` redirects to it; builds also fall back to that origin when
+the variable is not set. If the origin changes, replace the value and the
+fallback in `astro.config.mjs`, then redeploy.
+
+The domain is registered at Register.it. To serve it from Cloudflare:
+
+1. Add `paoloscrive.it` as a zone in Cloudflare and replace the Register.it
+   nameservers with the two that Cloudflare assigns.
+2. Once the zone is active, attach `paoloscrive.it` to the `paoloscrive`
+   Worker as a Custom Domain.
+3. Attach `www.paoloscrive.it` too, or add a redirect rule, so that it
+   redirects permanently to `https://paoloscrive.it`.
 
 Create a Cloudflare Web Analytics site for the production hostname, then set
 its public beacon token as `PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN` in the

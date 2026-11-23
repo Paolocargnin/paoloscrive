@@ -16,4 +16,4 @@ Paolo vuole un blog solo per la scrittura creativa. Invece di aggiungere una sez
 
 ## Conseguenze
 
-Sostituisce l'ADR 0019. Cambia il vocabolario dei Temi (ADR 0006): ora è in italiano e pensato per i racconti. Il Worker Cloudflare si chiama `paoloscrive` e l'origine pubblica va impostata con `PUBLIC_SITE_URL` prima del primo deploy (ADR 0018).
+Sostituisce l'ADR 0019. Cambia il vocabolario dei Temi (ADR 0006): ora è in italiano e pensato per i racconti. Il Worker Cloudflare si chiama `paoloscrive` e l'origine canonica è https://paoloscrive.it, con `www.paoloscrive.it` che reindirizza lì (ADR 0018).

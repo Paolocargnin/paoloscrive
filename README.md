@@ -5,8 +5,9 @@ Astro pre-renderizzato, nato come fork di
 [PC – the blog](https://github.com/Paolocargnin/blog) (ADR 0021): qui solo ciò
 che scrive Paolo, là progetti, codice e lavoro.
 
-Le Note e le Bozze stanno nel Workspace privato in `content/workspace/`, un
-repository separato che non va mai aggiunto a questo. Vedi
+Le Note, le Bozze e i Personaggi stanno nel Workspace privato in
+`content/workspace/`, un repository separato che non va mai aggiunto a questo.
+Si leggono e si scrivono nello Scrittoio. Vedi
 [il Workspace](docs/workspace.md).
 
 ## Sviluppo locale
@@ -14,6 +15,8 @@ repository separato che non va mai aggiunto a questo. Vedi
 Node 24.11.1 e pnpm 10.32.1, poi `pnpm install`.
 
 - `pnpm dev`: server locale.
+- `pnpm scrittoio`: lo Scrittoio, il back office privato dove leggere e
+  scrivere Note, Racconti e Personaggi del Workspace (ADR 0026).
 - `pnpm quality`: tutti i controlli richiesti (formato, tipi, test, skill,
   contenuti, build, link).
 - `pnpm content:check`: controlla Racconti, Traduzioni e, se c'è, il Workspace.

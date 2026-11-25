@@ -14,8 +14,8 @@
     "preview": "astro preview",
     "preview:cloudflare": "pnpm build && wrangler dev",
     "deploy": "pnpm build && wrangler deploy",
-    "format": "prettier --check .github/workflows/quality.yml README.md docs/deployment.md vitest.config.mjs docs/workspace.md astro.config.mjs package.json prettier.config.mjs scripts src tests tsconfig.json",
-    "format:write": "prettier --write .github/workflows/quality.yml README.md docs/deployment.md vitest.config.mjs docs/workspace.md astro.config.mjs package.json prettier.config.mjs scripts src tests tsconfig.json",
+    "format": "prettier --check .github/workflows/quality.yml README.md docs/deployment.md vitest.config.mjs docs/workspace.md astro.config.mjs package.json prettier.config.mjs scripts scrittoio src tests tsconfig.json",
+    "format:write": "prettier --write .github/workflows/quality.yml README.md docs/deployment.md vitest.config.mjs docs/workspace.md astro.config.mjs package.json prettier.config.mjs scripts scrittoio src tests tsconfig.json",
     "type-check": "astro check",
     "test": "vitest run",
     "content:check": "node ./scripts/content-check.mjs",
@@ -27,6 +27,7 @@
     "bozza": "node ./scripts/bozza.mjs",
     "pubblica": "node ./scripts/pubblica.mjs",
     "firma": "node ./scripts/firma.mjs",
+    "scrittoio": "node ./scrittoio/server.mjs --apri",
     "skills:check": "node ./scripts/skill-check.mjs",
     "quality": "pnpm format && pnpm type-check && pnpm test && pnpm skills:check && pnpm content:check && pnpm build && pnpm site:check"
   },

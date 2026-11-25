@@ -21,7 +21,7 @@ describe('content check', () => {
     ]);
 
     expect(stdout).toContain(
-      'Racconti pubblici e Workspace rispettano il contratto v3.',
+      'Racconti pubblici e Workspace rispettano il contratto v4.',
     );
   });
 
@@ -94,6 +94,6 @@ describe('content check', () => {
       '--public-only',
     ]);
 
-    expect(stdout).toContain('I Racconti pubblici rispettano il contratto v3.');
+    expect(stdout).toContain('I Racconti pubblici rispettano il contratto v4.');
   });
 });

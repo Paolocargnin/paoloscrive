@@ -118,6 +118,33 @@ describe('Workspace: Nota → Bozza → Racconto', () => {
     ).rejects.toThrow('non esiste');
   });
 
+  it('leaves forma and origine in the Workspace when it publishes', async () => {
+    const { workspace, postsDirectory } = await project();
+    await createNote({ workspace, slug: 'il-faro' });
+    await developNote({ workspace, slug: 'il-faro' });
+    await writeDraftText(workspace, 'il-faro', {
+      title: 'Il faro',
+      description: 'Una luce che aspetta una nave.',
+      forma: 'scena',
+      origine: { drive: 'abc', cartella: 'Testi', file: 'Il faro' },
+    });
+
+    const postFile = await publishDraft({
+      workspace,
+      postsDirectory,
+      slug: 'il-faro',
+      approvedBy: 'Paolo Cargnin',
+    });
+
+    const { data } = parseMarkdownDocument(
+      await readFile(postFile, 'utf8'),
+      postFile,
+    );
+    expect(data.forma).toBeUndefined();
+    expect(data.origine).toBeUndefined();
+    expect(data.title).toBe('Il faro');
+  });
+
   it('refuses an incomplete Bozza and leaves nothing public behind', async () => {
     const { workspace, postsDirectory } = await project();
     await createNote({ workspace, slug: 'il-faro' });

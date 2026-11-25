@@ -9,14 +9,19 @@
  * - the Workspace path is Nota → Bozza → pubblicato (ADR 0023);
  * - a substantive change is a Revisione, shown as "Rivisto il" (ADR 0024);
  * - writtenAt (a year, month or day) dates the Collana's colophon (ADR 0025).
+ *
+ * Version 4 adds the Scrittoio (ADR 0026):
+ * - personaggi/ holds Personaggi beside Note and Bozze;
+ * - forma and origine are Workspace-only metadata, removed at Pubblicazione.
  */
-export const CONTENT_CONTRACT_VERSION = 3;
+export const CONTENT_CONTRACT_VERSION = 4;
 
 export const contentContract = Object.freeze({
   version: CONTENT_CONTRACT_VERSION,
   workspace: Object.freeze({
     manifest: 'content-contract.json',
     lifecycleDirectories: Object.freeze(['note', 'bozze', 'pubblicati']),
+    characterDirectory: 'personaggi',
     textFile: 'testo.md',
     acceptedSidecars: Object.freeze(['appunti.md', 'lettura-critica.md']),
     materialsDirectory: 'materiali',
@@ -34,6 +39,21 @@ export const contentContract = Object.freeze({
       '.txt',
       '.md',
     ]),
+    workspaceOnlyMetadata: Object.freeze(['forma', 'origine']),
+    forme: Object.freeze({
+      idea: 'Idea',
+      scena: 'Scena',
+      dialogo: 'Dialogo',
+      pensiero: 'Pensiero',
+      poesia: 'Poesia',
+      canzone: 'Canzone',
+      battute: 'Battute',
+      frasi: 'Frasi',
+      diario: 'Diario',
+      lettera: 'Lettera',
+      gioco: 'Gioco',
+      citazione: 'Citazione',
+    }),
   }),
   languages: Object.freeze({
     it: Object.freeze({ name: 'italiano', ownName: 'Italiano' }),

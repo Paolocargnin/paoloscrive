@@ -350,7 +350,11 @@ async function validateWorkingText(textPath, lifecycle, errors) {
     errors.push(`${textPath}: manca ${textFile}.`);
     return;
   }
-  if (lifecycle === 'note') {
+  // A Nota and a Personaggio are free text; only a Bozza needs its stable id.
+  if (
+    lifecycle === 'note' ||
+    lifecycle === contentContract.workspace.characterDirectory
+  ) {
     return;
   }
   const { data } = await readMarkdown(textFilePath, errors);
@@ -365,7 +369,8 @@ async function validateWorkspaceDirectory(workspaceDirectory, errors) {
   if (!(await exists(workspaceDirectory))) {
     return false;
   }
-  const { manifest, lifecycleDirectories } = contentContract.workspace;
+  const { manifest, lifecycleDirectories, characterDirectory } =
+    contentContract.workspace;
 
   const manifestPath = path.join(workspaceDirectory, manifest);
   try {
@@ -384,6 +389,7 @@ async function validateWorkspaceDirectory(workspaceDirectory, errors) {
   const allowedRoot = new Set([
     manifest,
     ...lifecycleDirectories,
+    characterDirectory,
     '.git',
     'README.md',
   ]);
@@ -397,7 +403,7 @@ async function validateWorkspaceDirectory(workspaceDirectory, errors) {
     }
   }
 
-  for (const lifecycle of lifecycleDirectories) {
+  for (const lifecycle of [...lifecycleDirectories, characterDirectory]) {
     const lifecycleDirectory = path.join(workspaceDirectory, lifecycle);
     if (!(await exists(lifecycleDirectory))) {
       continue;

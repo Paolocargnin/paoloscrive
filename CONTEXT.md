@@ -9,12 +9,24 @@ Un testo narrativo di finzione dell'Autore, pubblicato su paoloscrive; è l'unit
 _Avoid_: Storia, post, articolo
 
 **Workspace**:
-L'insieme privato di Note e Bozze non ancora pubblicate, tenuto separato dal blog.
+L'insieme privato di Note, Bozze e Personaggi non ancora pubblicati, tenuto separato dal blog.
 _Avoid_: Note private, archivio
+
+**Scrittoio**:
+L'app locale e privata in cui Paolo ritrova, legge e scrive il Workspace: Note, Racconti e Personaggi.
+_Avoid_: Back office, CMS, admin
 
 **Nota**:
 Materiale grezzo, come un'idea, una scena o una frase, che potrebbe diventare un Racconto ma non lo è ancora.
 _Avoid_: Appunto, bozza
+
+**Forma**:
+Il tipo di una Nota, come idea, scena, dialogo, pensiero, poesia o diario; una Nota ne ha al massimo una e la Forma resta nel Workspace.
+_Avoid_: Tipo, categoria, Tema
+
+**Personaggio**:
+Una figura che l'Autore inventa e descrive nel Workspace, per ritrovarla nei testi che la nominano.
+_Avoid_: Scheda, character
 
 **Materiali**:
 Ciò che sta accanto a una Nota o a una Bozza senza esserne il testo: un memo vocale, la foto di una pagina del taccuino, una trascrizione. Restano nel Workspace e non vengono mai pubblicati.

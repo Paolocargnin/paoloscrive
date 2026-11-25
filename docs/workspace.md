@@ -28,7 +28,27 @@ content/workspace/
   bozze/<slug>/appunti.md    la Nota da cui è nata
   bozze/<slug>/lettura-critica.md   facoltativa
   pubblicati/<slug>/         la cartella di lavoro di un Racconto uscito
+  personaggi/<slug>/testo.md un Personaggio
 ```
+
+Ogni `testo.md` può avere nel frontmatter `title`, `writtenAt` e, per una Nota,
+`forma`. I testi arrivati dal Google Drive hanno anche `origine` (id, cartella e
+nome del file). `forma` e `origine` restano nel Workspace: `pnpm pubblica` li
+toglie (ADR 0026).
+
+## Lo Scrittoio
+
+```sh
+pnpm scrittoio
+```
+
+Apre su http://localhost:4322 il back office privato del Workspace (ADR 0026):
+Note, Racconti e Personaggi, filtri per forma, anno e provenienza, ricerca in
+tutti i testi. Si legge, si scrive (salva da solo), si trasforma una Nota in
+Racconto. «Salva nel repository» fa commit e push sul repository privato.
+Risponde solo da questo computer. Scorciatoie: `/` cerca, `n` nuovo testo, `e`
+modifica, `←` `→` testo precedente e successivo, `Esc` torna indietro, `⌘S`
+salva.
 
 ## I comandi
 
@@ -40,7 +60,8 @@ pnpm firma -- --slug il-faro --lang en --signed-by "Paolo Cargnin"
 pnpm workspace:validate
 ```
 
-- `nota` crea `note/<slug>/testo.md`.
+- `nota` crea `note/<slug>/testo.md` (lo Scrittoio fa lo stesso, con un
+  titolo e una forma).
 - `bozza` sposta la Nota in `bozze/`, la conserva come `appunti.md` e crea un
   `testo.md` con un `id` stabile e i metadati vuoti da riempire. Facoltativo:
   `writtenAt`, la data di scrittura per il colophon.

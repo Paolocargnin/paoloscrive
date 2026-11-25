@@ -70,8 +70,10 @@ export async function scaffoldWorkspace(workspace) {
     `${JSON.stringify({ version: contentContract.version }, null, 2)}\n`,
     utf8,
   );
+  const { lifecycleDirectories, characterDirectory } =
+    contentContract.workspace;
   await Promise.all(
-    contentContract.workspace.lifecycleDirectories.map(async (lifecycle) => {
+    [...lifecycleDirectories, characterDirectory].map(async (lifecycle) => {
       await mkdir(path.join(workspace, lifecycle), { recursive: true });
       await writeFile(path.join(workspace, lifecycle, '.gitkeep'), '', utf8);
     }),
@@ -171,6 +173,10 @@ export async function publishDraft({
   const source = await readFile(draftFile, utf8);
   const { data, body } = parseMarkdownDocument(source, draftFile);
   const published = { ...data, publishedAt: data.publishedAt ?? today() };
+  // forma and origine help Paolo find a text in the Scrittoio; readers never see them.
+  for (const key of contentContract.workspace.workspaceOnlyMetadata) {
+    delete published[key];
+  }
   if (Array.isArray(published.tags) && published.tags.length === 0) {
     delete published.tags;
   }

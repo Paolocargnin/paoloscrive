@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Scrittoio · Paolo scrive</title>
+    <link rel="icon" href="/icona.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/font/eb-garamond/wght.css" />
+    <link rel="stylesheet" href="/font/eb-garamond/wght-italic.css" />
+    <link rel="stylesheet" href="/font/bodoni-moda/standard.css" />
+    <link rel="stylesheet" href="/font/bodoni-moda/standard-italic.css" />
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" aria-label="Archivio">
+        <a class="wordmark" href="#/">
+          <span class="mark" aria-hidden="true">ps</span>
+          <span>
+            <span class="wordmark-name">Scrittoio</span>
+            <span class="wordmark-sub small-caps">Paolo scrive</span>
+          </span>
+        </a>
+
+        <label class="search">
+          <span class="visually-hidden">Cerca tra i tuoi scritti</span>
+          <input
+            id="search"
+            type="search"
+            placeholder="Cerca tra i tuoi scritti"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+
+        <nav id="generi" class="filters" aria-label="Generi"></nav>
+
+        <section class="filter-group">
+          <h2 class="small-caps">Forma</h2>
+          <div id="forme" class="chips"></div>
+        </section>
+
+        <section class="filter-group">
+          <h2 class="small-caps">Anno</h2>
+          <div id="anni" class="chips years"></div>
+        </section>
+
+        <section class="filter-group">
+          <h2 class="small-caps">Provenienza</h2>
+          <div id="provenienze" class="filters compact"></div>
+        </section>
+
+        <section
+          id="repository"
+          class="repository"
+          aria-live="polite"
+        ></section>
+      </aside>
+
+      <main id="main" class="main" tabindex="-1"></main>
+    </div>
+
+    <dialog id="nuovo" class="dialog">
+      <form method="dialog" id="nuovo-form">
+        <h2>Un testo nuovo</h2>
+        <fieldset class="segmented" id="nuovo-genere">
+          <legend class="visually-hidden">Che cosa scrivi</legend>
+          <label
+            ><input type="radio" name="genere" value="nota" checked /><span
+              >Nota</span
+            ></label
+          >
+          <label
+            ><input type="radio" name="genere" value="racconto" /><span
+              >Racconto</span
+            ></label
+          >
+          <label
+            ><input type="radio" name="genere" value="personaggio" /><span
+              >Personaggio</span
+            ></label
+          >
+        </fieldset>
+        <label class="field">
+          <span class="small-caps">Titolo</span>
+          <input
+            name="title"
+            required
+            autocomplete="off"
+            placeholder="Come lo chiami?"
+          />
+        </label>
+        <label class="field" id="nuovo-forma">
+          <span class="small-caps">Forma</span>
+          <select name="forma"></select>
+        </label>
+        <p class="dialog-hint" id="nuovo-hint"></p>
+        <!-- The first button is the one Enter presses: it must create. -->
+        <div class="dialog-actions reversed">
+          <button value="crea" class="button primary">
+            Comincia a scrivere
+          </button>
+          <button value="annulla" class="button quiet" formnovalidate>
+            Annulla
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="conferma" class="dialog">
+      <form method="dialog">
+        <h2 id="conferma-titolo"></h2>
+        <p id="conferma-testo"></p>
+        <div class="dialog-actions">
+          <button value="no" class="button quiet">Annulla</button>
+          <button value="si" class="button primary" id="conferma-si"></button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -202,6 +202,14 @@ async function route(request, response) {
     if (resource === 'repository' && method === 'POST') {
       return send(response, 200, await saveRepository(workspace));
     }
+    // A newer `pnpm scrittoio` asks this one to make room for it.
+    if (resource === 'chiudi' && method === 'POST') {
+      response.on('finish', () => {
+        console.log('Si è aperto uno Scrittoio più recente: questo si chiude.');
+        process.exit(0);
+      });
+      return send(response, 200, { chiuso: true });
+    }
     return send(response, 404, { errore: 'Non trovato.' });
   }
 
@@ -243,30 +251,67 @@ function openInBrowser() {
   }
 }
 
-// Running `pnpm scrittoio` twice opens the Scrittoio that is already running
-// instead of failing on a busy port.
+async function runningScrittoio() {
+  try {
+    const response = await fetch(`http://${host}:${port}/api/repository`);
+    return response.ok && Array.isArray((await response.json()).modificati);
+  } catch {
+    // Something else answers on the port, or nothing that speaks HTTP.
+    return false;
+  }
+}
+
+async function closeRunningScrittoio() {
+  try {
+    const response = await fetch(`http://${host}:${port}/api/chiudi`, {
+      method: 'POST',
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Running `pnpm scrittoio` again replaces the Scrittoio already running, so
+// Paolo always gets the latest code. An older Scrittoio that cannot close
+// itself is simply opened; anything else on the port gets a clear message.
+let attempts = 0;
 server.on('error', async (error) => {
   if (error.code !== 'EADDRINUSE') {
     throw error;
   }
-  try {
-    const response = await fetch(`http://${host}:${port}/api/repository`);
-    if (response.ok && (await response.json()).modificati) {
-      console.log(`Lo Scrittoio è già aperto su ${address}`);
-      openInBrowser();
-      return;
+  attempts += 1;
+  if (attempts > 1) {
+    if (attempts <= 20) {
+      setTimeout(() => server.listen(port, host), 250);
+    } else {
+      console.error(
+        'Lo Scrittoio già aperto non si è chiuso. Fermalo con Ctrl+C e riprova.',
+      );
+      process.exitCode = 1;
     }
-  } catch {
-    // Something else answers on the port, or nothing that speaks HTTP.
+    return;
   }
-  console.error(
-    `La porta ${port} è occupata da un altro programma. Prova con: pnpm scrittoio -- --port ${port + 1}`,
-  );
-  process.exitCode = 1;
+  if (!(await runningScrittoio())) {
+    console.error(
+      `La porta ${port} è occupata da un altro programma. Prova con: pnpm scrittoio -- --port ${port + 1}`,
+    );
+    process.exitCode = 1;
+    return;
+  }
+  if (await closeRunningScrittoio()) {
+    console.log('Chiudo lo Scrittoio già aperto e lo riapro aggiornato.');
+    setTimeout(() => server.listen(port, host), 250);
+    return;
+  }
+  console.log(`Lo Scrittoio è già aperto su ${address}`);
+  openInBrowser();
 });
 
-server.listen(port, host, () => {
+server.on('listening', () => {
   console.log(`Scrittoio aperto su ${address}`);
   console.log(`Workspace: ${workspace}`);
   openInBrowser();
 });
+
+server.listen(port, host);

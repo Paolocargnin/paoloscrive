@@ -1,7 +1,7 @@
 /*
  * The Scrittoio wears the Collana (ADR 0025): paper and ink, EB Garamond for
- * the text, Bodoni Moda for titles and numbers, colour only on the spines of
- * the Racconti.
+ * the text, Bodoni Moda for titles and numbers. Colour means one thing only:
+ * whether a Racconto is still a Bozza or already published.
  */
 :root {
   color-scheme: light;
@@ -13,6 +13,8 @@
   --plate: #ebe9e1;
   --sheet: #fbfaf6;
   --shadow: rgba(30, 30, 20, 0.16);
+  --bozza: #b7832c;
+  --pubblicato: #3e6862;
   --display:
     'Bodoni Moda Variable', 'Bodoni 72', Didot, 'Times New Roman', serif;
   --text: 'EB Garamond Variable', Garamond, 'Iowan Old Style', Georgia, serif;
@@ -36,6 +38,8 @@
     --plate: #1c1f1b;
     --sheet: #181a17;
     --shadow: rgba(0, 0, 0, 0.5);
+    --bozza: #c99a45;
+    --pubblicato: #5f948c;
   }
 }
 
@@ -511,7 +515,11 @@ kbd {
 
 .entry[data-genere='racconto']::before {
   width: 6px;
-  background: var(--spine, var(--ink));
+  background: var(--bozza);
+}
+
+.entry[data-stato='pubblicato']::before {
+  background: var(--pubblicato);
 }
 
 .entry[data-genere='personaggio']::before {
@@ -539,7 +547,15 @@ kbd {
 
 .segno[data-genere='racconto'] {
   width: 6px;
-  background: linear-gradient(#d4a619 0 33%, #3e6862 33% 66%, #6c2a3d 66%);
+  background: linear-gradient(var(--bozza) 0 50%, var(--pubblicato) 50%);
+}
+
+.segno[data-stato='bozza'] {
+  background: var(--bozza);
+}
+
+.segno[data-stato='pubblicato'] {
+  background: var(--pubblicato);
 }
 
 .segno[data-genere='personaggio'] {

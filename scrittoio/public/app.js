@@ -45,16 +45,6 @@ const mesi = [
   'dicembre',
 ];
 
-// The six spine tints of the Collana (ADR 0025).
-const tinte = [
-  '#d4a619',
-  '#3e6862',
-  '#6c2a3d',
-  '#b7832c',
-  '#243b66',
-  '#8d9399',
-];
-
 const suggerimenti = {
   nota: 'Un’idea, una scena, un dialogo, una frase da non perdere.',
   racconto: 'Nasce come Bozza. La pubblichi tu, quando è pronta.',
@@ -134,13 +124,6 @@ function provenienzaDi(testo) {
   if (cartella.startsWith('Testi/2008-2016')) return 'drive-2008';
   if (cartella.startsWith('Testi/2016-2020')) return 'drive-2016';
   return 'drive-testi';
-}
-
-function tinta(slug) {
-  let hash = 0;
-  for (const character of slug)
-    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  return tinte[hash % tinte.length];
 }
 
 function etichetta(testo) {
@@ -532,7 +515,7 @@ function entry(testo, query) {
       class="entry"
       href="#/t/${testo.ref}"
       data-genere="${testo.genere}"
-      style="--spine: ${tinta(testo.slug)}"
+      data-stato="${testo.stato}"
     >
       <span class="entry-title">${highlight(testo.title, query)}</span>
       <span class="entry-meta small-caps"
@@ -548,8 +531,12 @@ function legenda() {
   return markup`<p class="legenda">
     <span><i class="segno" data-genere="nota"></i>Nota</span>
     <span
-      ><i class="segno" data-genere="racconto"></i>Racconto, con il colore del
-      dorso del suo volume nella Collana</span
+      ><i class="segno" data-genere="racconto" data-stato="bozza"></i>Racconto
+      in bozza</span
+    >
+    <span
+      ><i class="segno" data-genere="racconto" data-stato="pubblicato"></i
+      >Racconto pubblicato</span
     >
     <span><i class="segno" data-genere="personaggio"></i>Personaggio</span>
   </p>`;

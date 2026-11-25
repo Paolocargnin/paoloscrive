@@ -21,7 +21,10 @@ import { repositoryStatus, saveRepository } from './repository.mjs';
  * It listens only on this computer and is never part of the public site.
  */
 const root = path.resolve(import.meta.dirname, '..');
-const options = optionsFromArguments();
+// --apri is a flag without a value: keep it from swallowing the next option.
+const options = optionsFromArguments(
+  process.argv.slice(2).filter((argument) => argument !== '--apri'),
+);
 const workspace = path.resolve(
   options.get('--workspace') ?? path.join(root, 'content', 'workspace'),
 );
@@ -214,11 +217,38 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(port, host, () => {
-  const address = `http://localhost:${port}`;
-  console.log(`Scrittoio aperto su ${address}`);
-  console.log(`Workspace: ${workspace}`);
+const address = `http://localhost:${port}`;
+
+function openInBrowser() {
   if (process.argv.includes('--apri')) {
     execFile('open', [address]);
   }
+}
+
+// Running `pnpm scrittoio` twice opens the Scrittoio that is already running
+// instead of failing on a busy port.
+server.on('error', async (error) => {
+  if (error.code !== 'EADDRINUSE') {
+    throw error;
+  }
+  try {
+    const response = await fetch(`http://${host}:${port}/api/repository`);
+    if (response.ok && (await response.json()).modificati) {
+      console.log(`Lo Scrittoio è già aperto su ${address}`);
+      openInBrowser();
+      return;
+    }
+  } catch {
+    // Something else answers on the port, or nothing that speaks HTTP.
+  }
+  console.error(
+    `La porta ${port} è occupata da un altro programma. Prova con: pnpm scrittoio -- --port ${port + 1}`,
+  );
+  process.exitCode = 1;
+});
+
+server.listen(port, host, () => {
+  console.log(`Scrittoio aperto su ${address}`);
+  console.log(`Workspace: ${workspace}`);
+  openInBrowser();
 });

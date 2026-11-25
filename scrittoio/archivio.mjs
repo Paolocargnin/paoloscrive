@@ -101,6 +101,16 @@ export function withoutTitleHeading(body, title) {
   );
 }
 
+/** The title a reader sees, from the source of a testo.md. */
+export function titleOf(source, slug) {
+  const { data, body } = readDocument(source, `${slug}/testo.md`);
+  return (
+    (typeof data.title === 'string' && data.title.trim()) ||
+    headingTitle(body) ||
+    slug.replaceAll('-', ' ')
+  );
+}
+
 function headingTitle(body) {
   return body
     .match(/^#\s+(.+?)\s*$/m)?.[1]

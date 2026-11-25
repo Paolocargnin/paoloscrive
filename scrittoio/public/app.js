@@ -436,11 +436,53 @@ function renderRepository() {
       : `${repo.daInviare === 1 ? 'Un salvataggio' : `${repo.daInviare} salvataggi`} da inviare a GitHub`;
   put(
     node,
-    markup`<p><span class="dot pending"></span>${cosa}.</p>
+    markup`<p><span class="dot pending"></span>${cosa}${pending ? ':' : '.'}</p>
+      ${pending ? markup`<ul class="cambiati">${repo.modificati.map(cambiato)}</ul>` : ''}
       <button class="button primary" type="button" id="salva-repository">
         Salva nel repository
       </button>`,
   );
+}
+
+const cambiamenti = {
+  nuovo: 'nuovo',
+  modificato: 'modificato',
+  cancellato: 'cancellato',
+  trasformato: 'diventato Racconto',
+};
+
+// One changed text: open it, or bring it back if it was deleted.
+function cambiato(testo) {
+  const etichetta = cambiamenti[testo.cambiamento] ?? testo.cambiamento;
+  if (testo.cambiamento === 'cancellato') {
+    return markup`<li>
+      <span class="cancellato">${testo.title}</span>
+      <span class="cambiamento">${etichetta}</span>
+      <button class="link-button" type="button" data-ripristina="${testo.ref}">
+        ripristina
+      </button>
+    </li>`;
+  }
+  return markup`<li>
+    <a href="#/t/${testo.ref}">${testo.title}</a>
+    <span class="cambiamento">${etichetta}</span>
+  </li>`;
+}
+
+async function restoreFromRepository(ref) {
+  try {
+    const result = await api('/api/repository/ripristina', {
+      method: 'POST',
+      body: { ref },
+    });
+    state.repository = result;
+    const data = await api('/api/testi');
+    state.testi = data.testi.map(prepare);
+    toast(`«${result.ripristinato.title}» è tornato dal repository.`);
+    go(`#/t/${ref}`);
+  } catch (error) {
+    toast(error.message, { error: true });
+  }
 }
 
 async function refreshRepository() {
@@ -1301,6 +1343,8 @@ document.addEventListener('click', (event) => {
     else setFilter({ [dataset.togli]: '' });
   } else if (dataset.nuovo) {
     openNewDialog(dataset.nuovo);
+  } else if (dataset.ripristina) {
+    restoreFromRepository(dataset.ripristina);
   } else if (target.id === 'salva-repository') {
     saveRepository(target);
   } else if (target.id === 'sviluppa') {

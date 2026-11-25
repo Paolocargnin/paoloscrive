@@ -16,7 +16,12 @@ import {
   saveText,
 } from './archivio.mjs';
 import { renderSidecar, renderText } from './pagina.mjs';
-import { repositoryStatus, saveRepository, textStatus } from './repository.mjs';
+import {
+  repositoryStatus,
+  restoreFromRepository,
+  saveRepository,
+  textStatus,
+} from './repository.mjs';
 
 /**
  * The Scrittoio (ADR 0026): Paolo's private back office for the Workspace.
@@ -196,10 +201,22 @@ async function route(request, response) {
       });
       return response.end(content);
     }
+    if (
+      resource === 'repository' &&
+      cartella === 'ripristina' &&
+      method === 'POST'
+    ) {
+      const { ref: target } = await readJson(request);
+      return send(
+        response,
+        200,
+        await restoreFromRepository(workspace, target),
+      );
+    }
     if (resource === 'repository' && method === 'GET') {
       return send(response, 200, await repositoryStatus(workspace));
     }
-    if (resource === 'repository' && method === 'POST') {
+    if (resource === 'repository' && !cartella && method === 'POST') {
       return send(response, 200, await saveRepository(workspace));
     }
     // A newer `pnpm scrittoio` asks this one to make room for it.

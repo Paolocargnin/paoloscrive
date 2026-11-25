@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,6 +22,10 @@ import {
   slugify,
 } from '../scrittoio/archivio.mjs';
 import { keepLineBreaks, renderText } from '../scrittoio/pagina.mjs';
+import {
+  repositoryStatus,
+  restoreFromRepository,
+} from '../scrittoio/repository.mjs';
 
 const temporaryDirectories = [];
 
@@ -256,6 +261,58 @@ describe('Scrittoio', () => {
     await writeText(root, 'note/doppio', '---\ntitle: Secondo\n---\n\nB.\n');
     await expect(restoreText(root, 'note/doppio')).rejects.toThrow(
       'un altro testo con questo nome',
+    );
+  });
+
+  it('says which texts changed since the last save, and brings back a deleted one', async () => {
+    const root = await workspace();
+    const git = (...args) =>
+      execFileSync('git', ['-C', root, ...args], { stdio: 'pipe' });
+    await writeText(root, 'note/resta', '---\ntitle: Resta\n---\n\nA.\n');
+    await writeText(root, 'note/cambia', '---\ntitle: Cambia\n---\n\nB.\n');
+    await writeText(root, 'note/sparisce', '---\ntitle: Sparisce\n---\n\nC.\n');
+    await writeText(root, 'note/il-faro', '---\ntitle: Il faro\n---\n\nD.\n');
+    git('init', '-q');
+    git(
+      '-c',
+      'user.name=Test',
+      '-c',
+      'user.email=test@example.com',
+      'add',
+      '-A',
+    );
+    git(
+      '-c',
+      'user.name=Test',
+      '-c',
+      'user.email=test@example.com',
+      'commit',
+      '-qm',
+      'inizio',
+    );
+
+    await saveText(root, 'note/cambia', { body: 'B, riscritta.' });
+    await deleteText(root, 'note/sparisce');
+    await createText(root, { genere: 'personaggio', title: 'Botteghino' });
+    await developText(root, 'note/il-faro');
+
+    const { modificati } = await repositoryStatus(root);
+    expect(modificati).toEqual([
+      {
+        ref: 'personaggi/botteghino',
+        cambiamento: 'nuovo',
+        title: 'Botteghino',
+      },
+      { ref: 'note/cambia', cambiamento: 'modificato', title: 'Cambia' },
+      { ref: 'bozze/il-faro', cambiamento: 'trasformato', title: 'Il faro' },
+      { ref: 'note/sparisce', cambiamento: 'cancellato', title: 'Sparisce' },
+    ]);
+
+    const restored = await restoreFromRepository(root, 'note/sparisce');
+    expect(restored.ripristinato.title).toBe('Sparisce');
+    expect((await readText(root, 'note/sparisce')).body.trim()).toBe('C.');
+    await expect(restoreFromRepository(root, 'note/cambia')).rejects.toThrow(
+      'solo un testo cancellato',
     );
   });
 

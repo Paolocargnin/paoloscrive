@@ -1,6 +1,9 @@
 import { execFile } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import { validateWorkspace } from '../scripts/workspace-lib.mjs';
+import { cartelle, parseRef, titleOf } from './archivio.mjs';
 
 function git(workspace, args) {
   return new Promise((resolve, reject) => {
@@ -19,16 +22,87 @@ function git(workspace, args) {
   });
 }
 
-function changedTexts(porcelain) {
-  const refs = new Set();
+// One line of `git status --porcelain` per file; a text is its folder.
+function changesByText(porcelain) {
+  const texts = new Map();
   for (const line of porcelain.split('\n').filter(Boolean)) {
+    const code = line.slice(0, 2);
     const file = line.slice(3).split(' -> ').at(-1).replace(/^"|"$/g, '');
-    const [cartella, slug] = file.split('/');
-    if (slug && !slug.startsWith('.')) {
-      refs.add(`${cartella}/${slug}`);
+    const [cartella, slug, ...rest] = file.split('/');
+    if (!slug || slug.startsWith('.') || !Object.hasOwn(cartelle, cartella)) {
+      continue;
     }
+    const ref = `${cartella}/${slug}`;
+    texts.set(ref, [...(texts.get(ref) ?? []), { code, file: rest.join('/') }]);
   }
-  return [...refs].sort();
+  return texts;
+}
+
+function kindOfChange(changes) {
+  if (
+    changes.some(({ code, file }) => file === 'testo.md' && code.includes('D'))
+  ) {
+    return 'cancellato';
+  }
+  if (changes.every(({ code }) => code === '??' || code.includes('A'))) {
+    return 'nuovo';
+  }
+  return 'modificato';
+}
+
+async function titleIn(workspace, ref, kind) {
+  const slug = ref.split('/')[1];
+  try {
+    const source =
+      kind === 'cancellato'
+        ? await git(workspace, ['show', `HEAD:${ref}/testo.md`])
+        : await readFile(path.join(workspace, ref, 'testo.md'), 'utf8');
+    return titleOf(source, slug);
+  } catch {
+    return slug.replaceAll('-', ' ');
+  }
+}
+
+/**
+ * Each text that differs from the private repository, with its title and
+ * what happened to it. A Nota that became a Bozza counts once, as trasformato.
+ */
+async function changedTexts(workspace, porcelain) {
+  const texts = [...changesByText(porcelain)].map(([ref, changes]) => ({
+    ref,
+    cambiamento: kindOfChange(changes),
+  }));
+  const developed = new Set(
+    texts
+      .filter(
+        ({ ref, cambiamento }) =>
+          ref.startsWith('bozze/') &&
+          cambiamento === 'nuovo' &&
+          texts.some(
+            (other) =>
+              other.ref === `note/${ref.split('/')[1]}` &&
+              other.cambiamento === 'cancellato',
+          ),
+      )
+      .map(({ ref }) => ref.split('/')[1]),
+  );
+  const result = [];
+  for (const text of texts) {
+    const slug = text.ref.split('/')[1];
+    if (developed.has(slug) && text.ref.startsWith('note/')) {
+      continue;
+    }
+    const cambiamento =
+      developed.has(slug) && text.ref.startsWith('bozze/')
+        ? 'trasformato'
+        : text.cambiamento;
+    result.push({
+      ...text,
+      cambiamento,
+      title: await titleIn(workspace, text.ref, cambiamento),
+    });
+  }
+  return result.sort((a, b) => a.title.localeCompare(b.title, 'it'));
 }
 
 /** What the private repository still lacks: uncommitted texts, unpushed commits. */
@@ -52,7 +126,7 @@ export async function repositoryStatus(workspace) {
     .trim()
     .split('\t');
   return {
-    modificati: changedTexts(porcelain),
+    modificati: await changedTexts(workspace, porcelain),
     daInviare,
     ultimo: { data, messaggio },
   };
@@ -87,7 +161,7 @@ export async function saveRepository(workspace) {
     const count = before.modificati.length;
     const subject =
       count === 1
-        ? `scrittoio: aggiorna ${before.modificati[0]}`
+        ? `scrittoio: ${before.modificati[0].cambiamento} ${before.modificati[0].ref}`
         : `scrittoio: aggiorna ${count} testi`;
     await git(workspace, ['add', '-A']);
     await git(workspace, [
@@ -95,7 +169,12 @@ export async function saveRepository(workspace) {
       '-m',
       subject,
       '-m',
-      before.modificati.map((ref) => `- ${ref}`).join('\n'),
+      before.modificati
+        .map(
+          ({ ref, title, cambiamento }) =>
+            `- ${cambiamento}: ${ref} (${title})`,
+        )
+        .join('\n'),
     ]);
   }
   let errore = null;
@@ -105,4 +184,29 @@ export async function saveRepository(workspace) {
     errore = error.stderr || error.message;
   }
   return { ...(await repositoryStatus(workspace)), errore };
+}
+
+/**
+ * Brings back a text deleted since the last save, as the repository has it.
+ * Only a deletion can be undone here; edits stay Paolo's to keep or change.
+ */
+export async function restoreFromRepository(workspace, ref) {
+  const { ref: checked } = parseRef(ref);
+  const { modificati } = await repositoryStatus(workspace);
+  const change = modificati.find((text) => text.ref === checked);
+  if (change?.cambiamento !== 'cancellato') {
+    throw Object.assign(
+      new Error('Dal repository si ripristina solo un testo cancellato.'),
+      { status: 400 },
+    );
+  }
+  await git(workspace, [
+    'restore',
+    '--source=HEAD',
+    '--staged',
+    '--worktree',
+    '--',
+    checked,
+  ]);
+  return { ...(await repositoryStatus(workspace)), ripristinato: change };
 }

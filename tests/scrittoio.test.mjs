@@ -21,7 +21,12 @@ import {
   saveText,
   slugify,
 } from '../scrittoio/archivio.mjs';
-import { keepLineBreaks, renderText } from '../scrittoio/pagina.mjs';
+import {
+  keepLineBreaks,
+  markChanges,
+  renderChanges,
+  renderText,
+} from '../scrittoio/pagina.mjs';
 import {
   repositoryStatus,
   restoreFromRepository,
@@ -355,6 +360,31 @@ describe('Scrittoio', () => {
     expect(html).not.toContain('<h1>');
     expect(html).toContain('Una luce<br>');
     expect(html).toContain('/api/materiali/note/il-faro/image1.png');
+  });
+
+  it('marks changes without breaking headings, paragraphs or line breaks', async () => {
+    const parts = [
+      { value: '# ' },
+      { value: 'Vecchio', removed: true },
+      { value: 'Nuovo', added: true },
+      { value: '\n\nUna luce' },
+      { value: ' che aspetta.\n\nUn faro', added: true },
+      { value: '.\n' },
+    ];
+
+    expect(markChanges(parts)).toBe(
+      '# <del>Vecchio</del><ins>Nuovo</ins>\n\nUna luce <ins>che aspetta.</ins>\n\n<ins>Un faro</ins>.\n',
+    );
+    const html = await renderChanges({
+      parts,
+      title: 'Il faro',
+      genere: 'nota',
+      ref: 'note/il-faro',
+    });
+    expect(html).toContain(
+      '<h1 id="vecchionuovo"><del>Vecchio</del><ins>Nuovo</ins></h1>',
+    );
+    expect(html).toContain('<p><ins>Un faro</ins>.</p>');
   });
 
   it('makes readable slugs', () => {

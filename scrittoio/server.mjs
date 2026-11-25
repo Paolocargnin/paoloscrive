@@ -15,7 +15,7 @@ import {
   restoreText,
   saveText,
 } from './archivio.mjs';
-import { renderSidecar, renderText } from './pagina.mjs';
+import { renderChanges, renderSidecar, renderText } from './pagina.mjs';
 import {
   repositoryStatus,
   restoreFromRepository,
@@ -185,7 +185,21 @@ async function route(request, response) {
       extra === 'modifiche' &&
       method === 'GET'
     ) {
-      return send(response, 200, await textChanges(workspace, ref));
+      const changes = await textChanges(workspace, ref);
+      return send(
+        response,
+        200,
+        changes.stato === 'modificato'
+          ? {
+              ...changes,
+              html: await renderChanges({
+                ...changes,
+                parts: changes.testo,
+                ref,
+              }),
+            }
+          : changes,
+      );
     }
     if (resource === 'testi' && ref && !extra && method === 'DELETE') {
       return send(response, 200, await deleteText(workspace, ref));

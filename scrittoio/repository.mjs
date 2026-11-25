@@ -276,6 +276,8 @@ export async function textChanges(workspace, ref) {
   ).trim();
   return {
     stato,
+    title: titleOf(current, slug),
+    genere: cartelle[checked.split('/')[0]].genere,
     salvatoIl: salvatoIl || null,
     campi,
     materiali,

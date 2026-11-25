@@ -60,7 +60,8 @@ const state = {
   lista: [],
   corrente: null,
   editor: null,
-  mostraModifiche: false,
+  // The Modifiche toggle stays as Paolo left it, also after quitting the app.
+  mostraModifiche: localStorage.getItem('scrittoio.modifiche') === 'on',
 };
 
 const main = document.querySelector('#main');
@@ -1351,13 +1352,7 @@ function changesMarkup(changes) {
       }
       ${toccato ? '' : markup`<p>Il testo è uguale: cambia solo quello che vedi qui sopra.</p>`}
     </div>
-    <div class="diff-testo">${changes.testo.map((part) =>
-      part.added
-        ? markup`<ins>${part.value}</ins>`
-        : part.removed
-          ? markup`<del>${part.value}</del>`
-          : part.value,
-    )}</div>`;
+    ${raw(changes.html.trim())}`;
 }
 
 async function showChanges(testo) {
@@ -1369,10 +1364,12 @@ async function showChanges(testo) {
     if (changes.stato !== 'modificato') return;
     put(corpo, changesMarkup(changes));
     corpo.classList.add('con-modifiche');
-    corpo.querySelector('.diff-testo :is(ins, del)')?.scrollIntoView({
-      block: 'center',
-      behavior: 'smooth',
-    });
+    corpo
+      .querySelector(':scope > :not(.modifiche-head) :is(ins, del)')
+      ?.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth',
+      });
   } catch (error) {
     toast(error.message, { error: true });
   }
@@ -1390,6 +1387,10 @@ function toggleChanges() {
   const toggle = document.querySelector('#modifiche');
   if (!testo || !toggle) return;
   state.mostraModifiche = !state.mostraModifiche;
+  localStorage.setItem(
+    'scrittoio.modifiche',
+    state.mostraModifiche ? 'on' : 'off',
+  );
   toggle.setAttribute('aria-pressed', String(state.mostraModifiche));
   if (state.mostraModifiche) showChanges(testo);
   else hideChanges(testo);

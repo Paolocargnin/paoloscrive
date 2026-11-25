@@ -54,3 +54,46 @@ export async function renderText({ body, title, genere, ref }) {
 export async function renderSidecar(body) {
   return body ? (await plain.render(keepLineBreaks(body))).code : null;
 }
+
+// A heading, list or quote marker stays outside <ins>/<del>, or the line
+// would stop being a heading, an item or a quote.
+const blockMarker = /^(\s{0,3}(?:#{1,6}\s+|[-*+]\s+|>\s?|\d+[.)]\s+))/;
+
+/**
+ * One Markdown source with the changes marked: what was added inside <ins>,
+ * what was removed inside <del>. Tags never cross a line break, so the text
+ * keeps its paragraphs, headings and line breaks.
+ */
+export function markChanges(parts) {
+  let source = '';
+  for (const part of parts) {
+    if (!part.added && !part.removed) {
+      source += part.value;
+      continue;
+    }
+    const tag = part.added ? 'ins' : 'del';
+    const before = source;
+    source += part.value
+      .split('\n')
+      .map((line, index) => {
+        const atLineStart = index > 0 || before === '' || before.endsWith('\n');
+        const marker = atLineStart ? (line.match(blockMarker)?.[1] ?? '') : '';
+        const content = line.slice(marker.length);
+        const lead = content.match(/^\s*/)[0];
+        let trail = content.match(/\s*$/)[0];
+        let core = content.slice(lead.length, content.length - trail.length);
+        if (core.endsWith('\\')) {
+          core = core.slice(0, -1);
+          trail = `\\${trail}`;
+        }
+        return core ? `${marker}${lead}<${tag}>${core}</${tag}>${trail}` : line;
+      })
+      .join('\n');
+  }
+  return source;
+}
+
+/** The text as the Scrittoio shows it, with the changes marked. */
+export function renderChanges({ parts, title, genere, ref }) {
+  return renderText({ body: markChanges(parts), title, genere, ref });
+}

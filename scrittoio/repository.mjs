@@ -3,7 +3,9 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { validateWorkspace } from '../scripts/workspace-lib.mjs';
-import { cartelle, parseRef, titleOf } from './archivio.mjs';
+import { diffWordsWithSpace } from 'diff';
+
+import { cartelle, parseRef, readSource, titleOf } from './archivio.mjs';
 
 function git(workspace, args) {
   return new Promise((resolve, reject) => {
@@ -209,4 +211,80 @@ export async function restoreFromRepository(workspace, ref) {
     checked,
   ]);
   return { ...(await repositoryStatus(workspace)), ripristinato: change };
+}
+
+const campiConfrontati = ['title', 'forma', 'writtenAt', 'lang'];
+
+/**
+ * What changed in a text since the version saved in the private repository:
+ * the editable fields, the materiali, and the text word by word.
+ */
+export async function textChanges(workspace, ref) {
+  const { ref: checked, slug } = parseRef(ref);
+  const stato = await textStatus(workspace, checked);
+  if (stato !== 'modificato') {
+    return { stato };
+  }
+  let saved;
+  try {
+    saved = await git(workspace, ['show', `HEAD:${checked}/testo.md`]);
+  } catch {
+    return { stato: 'nuovo' };
+  }
+  let current = '';
+  try {
+    current = await readFile(path.join(workspace, checked, 'testo.md'), 'utf8');
+  } catch {
+    current = '';
+  }
+  const prima = readSource(saved, slug);
+  const dopo = readSource(current, slug);
+  // A missing lang is Italian: saving it explicitly is not a change.
+  const value = (data, campo) =>
+    data[campo] == null
+      ? campo === 'lang'
+        ? 'it'
+        : null
+      : String(data[campo]);
+  const campi = campiConfrontati
+    .map((campo) => ({
+      campo,
+      prima: value(prima.data, campo),
+      dopo: value(dopo.data, campo),
+    }))
+    .filter(({ prima: before, dopo: after }) => before !== after);
+  const porcelain = await git(workspace, [
+    'status',
+    '--porcelain',
+    '--untracked-files=all',
+    '--',
+    `${checked}/materiali`,
+  ]);
+  const materiali = porcelain
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => ({
+      nome: path.basename(line.slice(3).replace(/^"|"$/g, '')),
+      cambiamento: line.slice(0, 2).includes('D')
+        ? 'cancellato'
+        : line.startsWith('??') || line.slice(0, 2).includes('A')
+          ? 'nuovo'
+          : 'modificato',
+    }));
+  const salvatoIl = (
+    await git(workspace, ['log', '-1', '--format=%cI', '--', checked])
+  ).trim();
+  return {
+    stato,
+    salvatoIl: salvatoIl || null,
+    campi,
+    materiali,
+    testo: diffWordsWithSpace(prima.body, dopo.body).map(
+      ({ value, added, removed }) => ({
+        value,
+        ...(added ? { added: true } : {}),
+        ...(removed ? { removed: true } : {}),
+      }),
+    ),
+  };
 }

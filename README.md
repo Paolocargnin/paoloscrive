@@ -15,8 +15,9 @@ Si leggono e si scrivono nello Scrittoio. Vedi
 Node 24.11.1 e pnpm 10.32.1, poi `pnpm install`.
 
 - `pnpm dev`: server locale.
-- `pnpm scrittoio`: lo Scrittoio, il back office privato dove leggere e
-  scrivere Note, Racconti e Personaggi del Workspace (ADR 0026).
+- `pnpm scrittoio:app`: installa Scrittoio.app, il back office privato dove
+  leggere e scrivere Note, Racconti e Personaggi del Workspace (ADR 0026).
+  `pnpm scrittoio` apre lo stesso Scrittoio nel browser.
 - `pnpm quality`: tutti i controlli richiesti (formato, tipi, test, skill,
   contenuti, build, link).
 - `pnpm content:check`: controlla Racconti, Traduzioni e, se c'è, il Workspace.

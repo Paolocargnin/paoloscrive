@@ -20,6 +20,7 @@ import {
   repositoryStatus,
   restoreFromRepository,
   saveRepository,
+  textChanges,
   textStatus,
 } from './repository.mjs';
 
@@ -177,6 +178,14 @@ async function route(request, response) {
         200,
         await withHtml(await developText(workspace, ref)),
       );
+    }
+    if (
+      resource === 'testi' &&
+      ref &&
+      extra === 'modifiche' &&
+      method === 'GET'
+    ) {
+      return send(response, 200, await textChanges(workspace, ref));
     }
     if (resource === 'testi' && ref && !extra && method === 'DELETE') {
       return send(response, 200, await deleteText(workspace, ref));

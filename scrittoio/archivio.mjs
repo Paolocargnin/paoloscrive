@@ -101,6 +101,11 @@ export function withoutTitleHeading(body, title) {
   );
 }
 
+/** Frontmatter and text of a testo.md, with or without frontmatter. */
+export function readSource(source, slug) {
+  return readDocument(source, `${slug}/testo.md`);
+}
+
 /** The title a reader sees, from the source of a testo.md. */
 export function titleOf(source, slug) {
   const { data, body } = readDocument(source, `${slug}/testo.md`);

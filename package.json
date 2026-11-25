@@ -28,6 +28,7 @@
     "pubblica": "node ./scripts/pubblica.mjs",
     "firma": "node ./scripts/firma.mjs",
     "scrittoio": "node ./scrittoio/server.mjs --apri",
+    "scrittoio:app": "node ./scrittoio/mac/crea-app.mjs",
     "skills:check": "node ./scripts/skill-check.mjs",
     "quality": "pnpm format && pnpm type-check && pnpm test && pnpm skills:check && pnpm content:check && pnpm build && pnpm site:check"
   },
@@ -38,6 +39,7 @@
     "@fontsource-variable/bodoni-moda": "^5.3.0",
     "@fontsource-variable/eb-garamond": "^5.3.0",
     "astro": "^7.1.6",
+    "diff": "^8.0.4",
     "sharp": "^0.34.5",
     "yaml": "^2.9.0"
   },

@@ -38,17 +38,26 @@ toglie (ADR 0026).
 
 ## Lo Scrittoio
 
+È il back office privato del Workspace (ADR 0026). Si apre come un'app del Mac,
+**Scrittoio**, da Spotlight, Launchpad o dal Dock. Per installarla, o
+aggiornarla dopo aver spostato il repository o cambiato Node:
+
 ```sh
-pnpm scrittoio
+pnpm scrittoio:app
 ```
 
-Apre su http://localhost:4322 il back office privato del Workspace (ADR 0026):
+Senza app, `pnpm scrittoio` apre lo stesso Scrittoio nel browser su
+http://localhost:4322. Lanciarlo di nuovo sostituisce quello già aperto. Il
+registro dell'app è in `~/Library/Logs/Scrittoio.log`.
+
+Che cosa fa:
 Note, Racconti e Personaggi, filtri per forma, anno e provenienza, ricerca in
 tutti i testi. Si legge, si scrive (salva da solo), si trasforma una Nota in
 Racconto, si cancella (con «Annulla» finché lo Scrittoio resta aperto). «Salva nel repository» fa commit e push sul repository privato.
-Risponde solo da questo computer. Scorciatoie: `/` cerca, `n` nuovo testo, `e`
-modifica, `←` `→` testo precedente e successivo, `Esc` torna indietro, `⌘S`
-salva.
+Risponde solo da questo computer. L'interruttore «Modifiche» mostra che cosa è cambiato
+dall'ultimo salvataggio nel repository. Scorciatoie: `/` cerca, `n` nuovo
+testo, `e` modifica, `m` modifiche, `←` `→` testo precedente e successivo,
+`Esc` torna indietro, `⌘S` salva.
 
 ## I comandi
 

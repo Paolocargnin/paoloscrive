@@ -25,6 +25,7 @@ import { keepLineBreaks, renderText } from '../scrittoio/pagina.mjs';
 import {
   repositoryStatus,
   restoreFromRepository,
+  textChanges,
 } from '../scrittoio/repository.mjs';
 
 const temporaryDirectories = [];
@@ -307,6 +308,20 @@ describe('Scrittoio', () => {
       { ref: 'bozze/il-faro', cambiamento: 'trasformato', title: 'Il faro' },
       { ref: 'note/sparisce', cambiamento: 'cancellato', title: 'Sparisce' },
     ]);
+
+    const changes = await textChanges(root, 'note/cambia');
+    expect(changes.stato).toBe('modificato');
+    expect(changes.campi).toEqual([]);
+    expect(
+      changes.testo
+        .filter((part) => part.added)
+        .map((part) => part.value)
+        .join(''),
+    ).toContain('riscritta');
+    expect((await textChanges(root, 'note/resta')).stato).toBe('salvato');
+    expect((await textChanges(root, 'personaggi/botteghino')).stato).toBe(
+      'nuovo',
+    );
 
     const restored = await restoreFromRepository(root, 'note/sparisce');
     expect(restored.ripristinato.title).toBe('Sparisce');

@@ -60,6 +60,7 @@ const state = {
   lista: [],
   corrente: null,
   editor: null,
+  mostraModifiche: false,
 };
 
 const main = document.querySelector('#main');
@@ -515,6 +516,10 @@ async function saveRepository(button) {
     } else {
       toast('Salvato e inviato al repository privato.');
     }
+    if (currentRoute().view === 'reader') {
+      state.corrente = null;
+      render();
+    }
   } catch (error) {
     toast(error.message, { error: true });
   }
@@ -766,6 +771,9 @@ function renderReader(testo) {
   ];
   if (testo.lang !== 'it')
     meta.push(state.lingue[testo.lang]?.ownName ?? testo.lang);
+  if (testo.repository === 'modificato')
+    meta.push('modificato dall’ultimo salvataggio');
+  if (testo.repository === 'nuovo') meta.push('non ancora nel repository');
   const origine = testo.origine;
 
   put(
@@ -790,6 +798,21 @@ function renderReader(testo) {
           aria-label="Testo successivo"
           >›</a
         >
+        ${
+          testo.repository === 'modificato'
+            ? markup`<button
+                class="toggle"
+                type="button"
+                id="modifiche"
+                aria-pressed="${state.mostraModifiche}"
+                title="Che cosa è cambiato dall’ultimo salvataggio nel repository (M)"
+              >
+                <span class="toggle-track" aria-hidden="true"
+                  ><span class="toggle-thumb"></span></span
+                >Modifiche
+              </button>`
+            : ''
+        }
         ${
           testo.stato !== 'pubblicato'
             ? markup`<button
@@ -829,6 +852,7 @@ function renderReader(testo) {
         </header>
         <div
           class="testo"
+          id="corpo"
           data-genere="${testo.genere}"
           data-forma="${testo.forma ?? ''}"
         >
@@ -1268,6 +1292,109 @@ async function restore(ref, position) {
   }
 }
 
+/* Changes since the last save to the repository */
+
+const nomiCampi = {
+  title: 'Titolo',
+  forma: 'Forma',
+  writtenAt: 'Data',
+  lang: 'Lingua',
+};
+
+function valoreCampo(campo, valore) {
+  if (valore == null) return '—';
+  if (campo === 'forma') return state.forme[valore] ?? valore;
+  if (campo === 'writtenAt') return dataLunga(valore);
+  if (campo === 'lang') return state.lingue[valore]?.ownName ?? valore;
+  return valore;
+}
+
+function changesMarkup(changes) {
+  const quando = changes.salvatoIl
+    ? new Date(changes.salvatoIl).toLocaleString('it-IT', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+  const toccato = changes.testo.some((part) => part.added || part.removed);
+  return markup`<div class="modifiche-head">
+      <p>
+        Rispetto alla versione salvata nel repository${quando ? ` il ${quando}` : ''}:
+        <ins>aggiunto</ins> e <del>tolto</del>.
+      </p>
+      ${
+        changes.campi.length
+          ? markup`<ul class="campi-cambiati">
+              ${changes.campi.map(
+                (campo) =>
+                  markup`<li>
+                    ${nomiCampi[campo.campo] ?? campo.campo}:
+                    <del>${valoreCampo(campo.campo, campo.prima)}</del> →
+                    <ins>${valoreCampo(campo.campo, campo.dopo)}</ins>
+                  </li>`,
+              )}
+            </ul>`
+          : ''
+      }
+      ${
+        changes.materiali.length
+          ? markup`<ul class="campi-cambiati">
+              ${changes.materiali.map(
+                (materiale) =>
+                  markup`<li>Materiale ${materiale.nome}: ${materiale.cambiamento}</li>`,
+              )}
+            </ul>`
+          : ''
+      }
+      ${toccato ? '' : markup`<p>Il testo è uguale: cambia solo quello che vedi qui sopra.</p>`}
+    </div>
+    <div class="diff-testo">${changes.testo.map((part) =>
+      part.added
+        ? markup`<ins>${part.value}</ins>`
+        : part.removed
+          ? markup`<del>${part.value}</del>`
+          : part.value,
+    )}</div>`;
+}
+
+async function showChanges(testo) {
+  const corpo = document.querySelector('#corpo');
+  if (!corpo || testo.repository !== 'modificato') return;
+  try {
+    const changes = await api(`/api/testi/${testo.ref}/modifiche`);
+    if (state.corrente?.ref !== testo.ref || !state.mostraModifiche) return;
+    if (changes.stato !== 'modificato') return;
+    put(corpo, changesMarkup(changes));
+    corpo.classList.add('con-modifiche');
+    corpo.querySelector('.diff-testo :is(ins, del)')?.scrollIntoView({
+      block: 'center',
+      behavior: 'smooth',
+    });
+  } catch (error) {
+    toast(error.message, { error: true });
+  }
+}
+
+function hideChanges(testo) {
+  const corpo = document.querySelector('#corpo');
+  if (!corpo) return;
+  corpo.classList.remove('con-modifiche');
+  put(corpo, raw(testo.html.trim()));
+}
+
+function toggleChanges() {
+  const testo = state.corrente;
+  const toggle = document.querySelector('#modifiche');
+  if (!testo || !toggle) return;
+  state.mostraModifiche = !state.mostraModifiche;
+  toggle.setAttribute('aria-pressed', String(state.mostraModifiche));
+  if (state.mostraModifiche) showChanges(testo);
+  else hideChanges(testo);
+}
+
 /* Rendering */
 
 let renderToken = 0;
@@ -1318,6 +1445,7 @@ async function render() {
   if (route.view === 'editor') renderEditor(testo);
   else renderReader(testo);
   main.scrollTop = 0;
+  if (route.view === 'reader' && state.mostraModifiche) showChanges(testo);
 }
 
 /* Events */
@@ -1351,6 +1479,8 @@ document.addEventListener('click', (event) => {
     developCurrent();
   } else if (target.id === 'cancella') {
     deleteCurrent();
+  } else if (target.id === 'modifiche') {
+    toggleChanges();
   } else if (target.id === 'salva') {
     if (state.editor) state.editor.dirty = true;
     saveEditor();
@@ -1425,6 +1555,7 @@ document.addEventListener('keydown', (event) => {
     if ((event.key === 'ArrowRight' || event.key === 'j') && next)
       go(`#/t/${next}`);
     if (event.key === 'e') go(`#/t/${route.ref}/modifica`);
+    if (event.key === 'm') toggleChanges();
   }
 });
 
@@ -1438,6 +1569,9 @@ window.addEventListener('beforeunload', (event) => {
 });
 
 window.addEventListener('focus', refreshRepository);
+
+// Scrittoio.app calls this before quitting, so nothing Paolo typed is lost.
+window.scrittoioPrimaDiChiudere = () => saveEditor();
 
 /* Start */
 

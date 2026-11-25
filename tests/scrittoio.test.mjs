@@ -10,11 +10,13 @@ import {
 } from '../scripts/workspace-lib.mjs';
 import {
   createText,
+  deleteText,
   developText,
   listTexts,
   parseRef,
   readMaterial,
   readText,
+  restoreText,
   saveText,
   slugify,
 } from '../scrittoio/archivio.mjs';
@@ -201,6 +203,60 @@ describe('Scrittoio', () => {
     expect(fiorellone.menzioni.map((menzione) => menzione.ref)).toEqual([
       'note/il-giardino',
     ]);
+  });
+
+  it('deletes a text with its materiali and can bring it back', async () => {
+    const root = await workspace();
+    await writeText(
+      root,
+      'note/il-faro',
+      '---\ntitle: Il faro\n---\n\nUna luce.\n',
+    );
+    await mkdir(path.join(root, 'note', 'il-faro', 'materiali'));
+    const memo = Buffer.from([0, 1, 2, 250, 255]);
+    await writeFile(
+      path.join(root, 'note', 'il-faro', 'materiali', 'memo.m4a'),
+      memo,
+    );
+
+    await expect(deleteText(root, 'note/il-faro')).resolves.toEqual({
+      ref: 'note/il-faro',
+      title: 'Il faro',
+    });
+    expect(await listTexts(root)).toEqual([]);
+
+    const restored = await restoreText(root, 'note/il-faro');
+    expect(restored).toMatchObject({
+      title: 'Il faro',
+      materiali: ['memo.m4a'],
+    });
+    expect(
+      await readFile(
+        path.join(root, 'note', 'il-faro', 'materiali', 'memo.m4a'),
+      ),
+    ).toEqual(memo);
+    await expect(restoreText(root, 'note/il-faro')).rejects.toThrow(
+      'niente da ripristinare',
+    );
+  });
+
+  it('keeps a published Racconto and refuses to overwrite on restore', async () => {
+    const root = await workspace();
+    await writeText(
+      root,
+      'pubblicati/il-faro',
+      '---\nid: 7b0e8f3e-8f4a-4c55-9a39-5d2f1c0b9e11\ntitle: Il faro\n---\n\nX.\n',
+    );
+    await expect(deleteText(root, 'pubblicati/il-faro')).rejects.toThrow(
+      'non si cancella',
+    );
+
+    await writeText(root, 'note/doppio', '---\ntitle: Primo\n---\n\nA.\n');
+    await deleteText(root, 'note/doppio');
+    await writeText(root, 'note/doppio', '---\ntitle: Secondo\n---\n\nB.\n');
+    await expect(restoreText(root, 'note/doppio')).rejects.toThrow(
+      'un altro testo con questo nome',
+    );
   });
 
   it('never reads outside the Workspace', async () => {

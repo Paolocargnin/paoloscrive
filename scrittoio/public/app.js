@@ -156,15 +156,27 @@ function etichetta(testo) {
 }
 
 let toastTimer;
-function toast(message, { error = false } = {}) {
+function toast(message, { error = false, action = null } = {}) {
   const node = document.querySelector('#toast');
   node.textContent = message;
+  if (action) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'toast-action';
+    button.textContent = action.label;
+    button.addEventListener('click', () => {
+      node.classList.remove('visible');
+      action.run();
+    });
+    node.append(' ', button);
+  }
   node.classList.toggle('error', error);
+  node.classList.toggle('actionable', Boolean(action));
   node.classList.add('visible');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(
     () => node.classList.remove('visible'),
-    error ? 6000 : 2600,
+    action ? 10000 : error ? 6000 : 2600,
   );
 }
 
@@ -735,6 +747,18 @@ function renderReader(testo) {
           >›</a
         >
         ${
+          testo.stato !== 'pubblicato'
+            ? markup`<button
+                class="button quiet danger"
+                type="button"
+                id="cancella"
+                title="Cancella questo testo"
+              >
+                Cancella
+              </button>`
+            : ''
+        }
+        ${
           testo.genere === 'nota'
             ? markup`<button
                 class="button quiet"
@@ -1096,11 +1120,13 @@ async function createFromDialog() {
   }
 }
 
-function confirmDialog({ title, text, action }) {
+function confirmDialog({ title, text, action, danger = false }) {
   const dialog = document.querySelector('#conferma');
   document.querySelector('#conferma-titolo').textContent = title;
   document.querySelector('#conferma-testo').textContent = text;
-  document.querySelector('#conferma-si').textContent = action;
+  const confirm = document.querySelector('#conferma-si');
+  confirm.textContent = action;
+  confirm.classList.toggle('danger', danger);
   dialog.returnValue = '';
   dialog.showModal();
   return new Promise((resolve) => {
@@ -1131,6 +1157,68 @@ async function developCurrent() {
     scheduleRepositoryRefresh();
     go(`#/t/${bozza.ref}/modifica`);
     toast('Ora è una Bozza tra i Racconti.');
+  } catch (error) {
+    toast(error.message, { error: true });
+  }
+}
+
+// How safe a text is once deleted, from the private repository's point of view.
+const recupero = {
+  salvato:
+    'Puoi annullare subito; dopo resta comunque nella storia del repository privato.',
+  modificato:
+    'Puoi annullare finché lo Scrittoio resta aperto. Dopo, dal repository privato si recupera solo l’ultima versione salvata lì, senza le modifiche più recenti.',
+  nuovo:
+    'Non è mai stato salvato nel repository: puoi annullare solo finché lo Scrittoio resta aperto, poi non si recupera più.',
+};
+
+async function deleteCurrent() {
+  const testo = state.corrente;
+  if (!testo || testo.stato === 'pubblicato') return;
+  const insieme = [
+    testo.materiali.length === 1 && 'il suo materiale',
+    testo.materiali.length > 1 && `i suoi ${testo.materiali.length} materiali`,
+    testo.appunti && 'gli Appunti',
+  ].filter(Boolean);
+  const ok = await confirmDialog({
+    title: `Cancellare «${testo.title}»?`,
+    text: `${recupero[testo.repository] ?? recupero.nuovo}${
+      insieme.length ? ` Se ne vanno anche ${insieme.join(' e ')}.` : ''
+    }`,
+    action: 'Cancella',
+    danger: true,
+  });
+  if (!ok) return;
+  const { previous, next } = neighbours(testo.ref);
+  try {
+    await api(`/api/testi/${testo.ref}`, { method: 'DELETE' });
+  } catch (error) {
+    toast(error.message, { error: true });
+    return;
+  }
+  const position = state.lista.indexOf(testo.ref);
+  state.testi = state.testi.filter((item) => item.ref !== testo.ref);
+  state.lista = state.lista.filter((ref) => ref !== testo.ref);
+  state.corrente = null;
+  scheduleRepositoryRefresh();
+  const destination = next ?? previous;
+  go(destination ? `#/t/${destination}` : lastArchiveHash);
+  toast(`Hai cancellato «${testo.title}».`, {
+    action: { label: 'Annulla', run: () => restore(testo.ref, position) },
+  });
+}
+
+async function restore(ref, position) {
+  try {
+    const testo = await api(`/api/testi/${ref}/ripristina`, { method: 'POST' });
+    remember(testo);
+    if (position >= 0 && !state.lista.includes(ref)) {
+      state.lista.splice(position, 0, ref);
+    }
+    state.corrente = testo;
+    scheduleRepositoryRefresh();
+    go(`#/t/${ref}`);
+    toast(`«${testo.title}» è tornato al suo posto.`);
   } catch (error) {
     toast(error.message, { error: true });
   }
@@ -1215,6 +1303,8 @@ document.addEventListener('click', (event) => {
     saveRepository(target);
   } else if (target.id === 'sviluppa') {
     developCurrent();
+  } else if (target.id === 'cancella') {
+    deleteCurrent();
   } else if (target.id === 'salva') {
     if (state.editor) state.editor.dirty = true;
     saveEditor();

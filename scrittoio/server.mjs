@@ -7,14 +7,16 @@ import { contentContract } from '../src/content/contract.mjs';
 import { optionsFromArguments } from '../scripts/workspace-cli.mjs';
 import {
   createText,
+  deleteText,
   developText,
   listTexts,
   readMaterial,
   readText,
+  restoreText,
   saveText,
 } from './archivio.mjs';
 import { renderSidecar, renderText } from './pagina.mjs';
-import { repositoryStatus, saveRepository } from './repository.mjs';
+import { repositoryStatus, saveRepository, textStatus } from './repository.mjs';
 
 /**
  * The Scrittoio (ADR 0026): Paolo's private back office for the Workspace.
@@ -80,6 +82,7 @@ async function readJson(request) {
 async function withHtml(text) {
   return {
     ...text,
+    repository: await textStatus(workspace, text.ref),
     html: await renderText(text),
     appuntiHtml: await renderSidecar(text.appunti),
     letturaCriticaHtml: await renderSidecar(text.letturaCritica),
@@ -168,6 +171,21 @@ async function route(request, response) {
         response,
         200,
         await withHtml(await developText(workspace, ref)),
+      );
+    }
+    if (resource === 'testi' && ref && !extra && method === 'DELETE') {
+      return send(response, 200, await deleteText(workspace, ref));
+    }
+    if (
+      resource === 'testi' &&
+      ref &&
+      extra === 'ripristina' &&
+      method === 'POST'
+    ) {
+      return send(
+        response,
+        200,
+        await withHtml(await restoreText(workspace, ref)),
       );
     }
     if (resource === 'materiali' && ref && extra && method === 'GET') {

@@ -357,6 +357,17 @@ kbd {
   border-color: var(--rule);
 }
 
+.button.danger {
+  color: #a3352e;
+}
+
+.button.danger:hover,
+.button.primary.danger {
+  background: #8f2f29;
+  border-color: #8f2f29;
+  color: #fff;
+}
+
 .button[disabled] {
   opacity: 0.45;
   cursor: default;
@@ -1113,6 +1124,26 @@ kbd {
 .toast.error {
   background: #8f2f29;
   color: #fff;
+}
+
+.toast.actionable {
+  pointer-events: auto;
+}
+
+.toast-action {
+  margin-left: 0.6rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  padding: 0.05rem 0.7rem 0.12rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.toast-action:hover {
+  background: var(--paper);
+  color: var(--ink);
 }
 
 @media (max-width: 860px) {

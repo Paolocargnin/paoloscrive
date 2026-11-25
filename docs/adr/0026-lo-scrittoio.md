@@ -13,6 +13,7 @@ Gli scritti di Paolo stavano sparsi nel Google Drive: la cartella «Testi» con 
 - Una Nota può avere una **Forma** da un vocabolario controllato: idea, scena, dialogo, pensiero, poesia, canzone, battute, frasi, diario, lettera, gioco, citazione.
 - `forma` e `origine` (da dove viene un testo importato) sono metadati del Workspace. La Pubblicazione li toglie, così un Racconto pubblico resta com'è nel contratto.
 - Lo Scrittoio salva da solo sul disco mentre Paolo scrive. «Salva nel repository» controlla il contratto, fa commit e push sul repository privato: è un gesto di Paolo, come la Pubblicazione.
+- Un testo si cancella dallo Scrittoio, con i suoi Appunti e Materiali, dopo una conferma che dice se è già al sicuro nel repository privato. Finché lo Scrittoio resta aperto si può annullare; dopo «Salva nel repository» il testo resta nella storia di Git. Un Racconto pubblicato non si cancella da qui, perché il testo pubblico dipende dalla sua cartella di lavoro.
 - Pubblicare resta un comando che Paolo lancia dal terminale (ADR 0023). Lo Scrittoio lo ricorda accanto a una Bozza, ma non lo esegue.
 - Il 25 novembre 2026 gli scritti del Drive sono entrati nel Workspace così come Paolo li aveva scritti: il testo non è stato toccato, solo convertito in Markdown, con titolo, forma, data e provenienza nei metadati. Sono rimasti fuori i file che non sono scrittura (una tablatura, una ricetta, due prompt di lavoro, un elenco di lavori web) e un file con soli numeri che sembrano un dato di pagamento.
 

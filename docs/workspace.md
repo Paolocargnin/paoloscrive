@@ -45,7 +45,7 @@ pnpm scrittoio
 Apre su http://localhost:4322 il back office privato del Workspace (ADR 0026):
 Note, Racconti e Personaggi, filtri per forma, anno e provenienza, ricerca in
 tutti i testi. Si legge, si scrive (salva da solo), si trasforma una Nota in
-Racconto. «Salva nel repository» fa commit e push sul repository privato.
+Racconto, si cancella (con «Annulla» finché lo Scrittoio resta aperto). «Salva nel repository» fa commit e push sul repository privato.
 Risponde solo da questo computer. Scorciatoie: `/` cerca, `n` nuovo testo, `e`
 modifica, `←` `→` testo precedente e successivo, `Esc` torna indietro, `⌘S`
 salva.

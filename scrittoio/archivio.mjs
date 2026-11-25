@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import {
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -408,6 +415,76 @@ export async function developText(workspace, ref) {
   };
   await writeFile(file, serializeMarkdownDocument(data, draft.body), utf8);
   return readText(workspace, draftRef);
+}
+
+// What Paolo deleted while the Scrittoio is open, so "Annulla" can bring it
+// back. Once he saves to the repository, Git history keeps it instead.
+const cestino = new Map();
+
+async function filesIn(directory) {
+  const entries = await readdir(directory, {
+    recursive: true,
+    withFileTypes: true,
+  });
+  return Promise.all(
+    entries
+      .filter((entry) => entry.isFile())
+      .map(async (entry) => {
+        const file = path.join(entry.parentPath, entry.name);
+        return {
+          relative: path.relative(directory, file),
+          content: await readFile(file),
+        };
+      }),
+  );
+}
+
+/**
+ * Deletes a Nota, a Bozza or a Personaggio with its sidecars and materiali.
+ * A published Racconto keeps its working folder: the public text depends on it.
+ */
+export async function deleteText(workspace, ref) {
+  const { cartella, slug } = parseRef(ref);
+  if (cartella === 'pubblicati') {
+    throw Object.assign(
+      new Error('Un Racconto pubblicato non si cancella dallo Scrittoio.'),
+      { status: 400 },
+    );
+  }
+  const directory = path.join(workspace, cartella, slug);
+  if (!(await exists(path.join(directory, textFile)))) {
+    throw Object.assign(new Error(`${ref} non esiste.`), { status: 404 });
+  }
+  const { title } = await readEntry(workspace, cartella, slug);
+  cestino.set(`${workspace}\0${ref}`, await filesIn(directory));
+  await rm(directory, { recursive: true, force: true });
+  return { ref, title };
+}
+
+/** Brings back a text deleted while this Scrittoio has been open. */
+export async function restoreText(workspace, ref) {
+  const { cartella, slug } = parseRef(ref);
+  const key = `${workspace}\0${ref}`;
+  const files = cestino.get(key);
+  if (!files) {
+    throw Object.assign(new Error('Non c’è niente da ripristinare.'), {
+      status: 404,
+    });
+  }
+  const directory = path.join(workspace, cartella, slug);
+  if (await exists(directory)) {
+    throw Object.assign(
+      new Error('C’è già un altro testo con questo nome: rinominalo prima.'),
+      { status: 409 },
+    );
+  }
+  for (const file of files) {
+    const target = path.join(directory, file.relative);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, file.content);
+  }
+  cestino.delete(key);
+  return readText(workspace, ref);
 }
 
 const materialTypes = Object.freeze({

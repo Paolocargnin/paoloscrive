@@ -59,6 +59,23 @@ export async function repositoryStatus(workspace) {
 }
 
 /**
+ * Whether a text is safe in the private repository: 'salvato' (committed as
+ * it is), 'modificato' (committed, changed since) or 'nuovo' (never saved).
+ */
+export async function textStatus(workspace, ref) {
+  try {
+    const tracked = await git(workspace, ['ls-files', '--', ref]);
+    if (tracked.trim() === '') {
+      return 'nuovo';
+    }
+    const changes = await git(workspace, ['status', '--porcelain', '--', ref]);
+    return changes.trim() === '' ? 'salvato' : 'modificato';
+  } catch {
+    return 'nuovo';
+  }
+}
+
+/**
  * Paolo's "Salva nel repository": check the contract, commit every change
  * and push to the private remote. A failed push keeps the commit; the next
  * save tries again.

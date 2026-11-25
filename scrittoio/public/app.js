@@ -357,7 +357,9 @@ function renderSidebar() {
           data-genere="${key}"
           aria-pressed="${route.view === 'archive' && filtro.genere === key}"
         >
-          <span class="label">${label}</span><span class="count">${count}</span>
+          <span class="label"
+            >${key ? markup`<i class="segno" data-genere="${key}"></i>` : ''}${label}</span
+          ><span class="count">${count}</span>
         </button>`,
     )}`,
   );
@@ -541,6 +543,18 @@ function entry(testo, query) {
   </li>`;
 }
 
+// What the mark at the left of every entry means.
+function legenda() {
+  return markup`<p class="legenda">
+    <span><i class="segno" data-genere="nota"></i>Nota</span>
+    <span
+      ><i class="segno" data-genere="racconto"></i>Racconto, con il colore del
+      dorso del suo volume nella Collana</span
+    >
+    <span><i class="segno" data-genere="personaggio"></i>Personaggio</span>
+  </p>`;
+}
+
 function archiveTitle(filtro) {
   if (filtro.forma) return state.forme[filtro.forma] ?? filtro.forma;
   if (filtro.genere) return generi[filtro.genere].plurale;
@@ -585,6 +599,7 @@ function renderArchive(filtro) {
             ${parole(parolePerLista)} ·
             ${ordini[filtro.ordine] ?? ordini.recenti}
           </p>
+          ${legenda()}
         </div>
         <div class="archive-tools">
           <label>

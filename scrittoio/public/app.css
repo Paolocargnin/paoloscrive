@@ -525,6 +525,41 @@ kbd {
   background: transparent;
 }
 
+/* The same marks as the entries, used as a legend. */
+.segno {
+  display: inline-block;
+  flex: none;
+  width: 3px;
+  height: 0.95em;
+  margin-right: 0.5rem;
+  border-radius: 2px;
+  background: var(--rule);
+  vertical-align: -0.1em;
+}
+
+.segno[data-genere='racconto'] {
+  width: 6px;
+  background: linear-gradient(#d4a619 0 33%, #3e6862 33% 66%, #6c2a3d 66%);
+}
+
+.segno[data-genere='personaggio'] {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+  vertical-align: 0.05em;
+}
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.25rem;
+  margin: 0.6rem 0 0;
+  color: var(--faint);
+  font-size: 0.92rem;
+}
+
 .entry-title {
   display: block;
   font-size: 1.3rem;
